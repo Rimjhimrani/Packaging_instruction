@@ -676,315 +676,466 @@ def main():
                     part_weight_unit = st.selectbox("Weight Unit", ["kg", "g", "lbs"])
                     
                 st.write("**Part Dimensions**")
-                col2c, col2d, col2e = st.columns(3)
+                col2c, col2d, col2e  = st.columns(3)
                 with col2c:
-                    part_l = st.number_input("Length (L)", min_value=0.0, format="%.2f")
+                    part_l = st.number_input("Length (mm)", min_value=0.0, format="%.1f")
                 with col2d:
-                    part_w = st.number_input("Width (W)", min_value=0.0, format="%.2f")
+                    part_w = st.number_input("Width (mm)", min_value=0.0, format="%.1f")
                 with col2e:
-                    part_h = st.number_input("Height (H)", min_value=0.0, format="%.2f")
+                    part_h = st.number_input("Height (mm)", min_value=0.0, format="%.1f")
         
         with tab2:
             st.subheader("📦 Packaging Details")
             
-            col1, col2 = st.columns(2)
+            col3, col4 = st.columns(2)
             
-            with col1:
+            with col3:
                 st.write("**Primary Packaging**")
-                primary_packaging_type = st.text_input("Primary Packaging Type")
+                primary_type = st.selectbox("Primary Packaging Type", 
+                    ["", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS", "Custom"])
                 
-                col1a, col1b, col1c = st.columns(3)
-                with col1a:
-                    primary_l = st.number_input("Primary L (mm)", min_value=0.0, format="%.2f")
-                with col1b:
-                    primary_w = st.number_input("Primary W (mm)", min_value=0.0, format="%.2f")
-                with col1c:
-                    primary_h = st.number_input("Primary H (mm)", min_value=0.0, format="%.2f")
+                if primary_type == "Custom":
+                    primary_type = st.text_input("Custom Primary Type")
                 
-                col1d, col1e = st.columns(2)
-                with col1d:
-                    primary_qty = st.number_input("Primary Qty/Pack", min_value=0, step=1)
-                    primary_empty_weight = st.number_input("Primary Empty Weight", min_value=0.0, format="%.2f")
-                with col1e:
-                    primary_pack_weight = st.number_input("Primary Pack Weight", min_value=0.0, format="%.2f")
+                col3a, col3b, col3c = st.columns(3)
+                with col3a:
+                    primary_l = st.number_input("Primary L (mm)", min_value=0.0, format="%.0f", key="prim_l")
+                with col3b:
+                    primary_w = st.number_input("Primary W (mm)", min_value=0.0, format="%.0f", key="prim_w")
+                with col3c:
+                    primary_h = st.number_input("Primary H (mm)", min_value=0.0, format="%.0f", key="prim_h")
+                
+                col3d, col3e = st.columns(2)
+                with col3d:
+                    primary_qty = st.number_input("Primary Qty/Pack", min_value=0, format="%d", key="prim_qty")
+                    primary_empty_weight = st.number_input("Primary Empty Weight (kg)", min_value=0.0, format="%.2f", key="prim_empty")
+                with col3e:
+                    primary_pack_weight = st.number_input("Primary Pack Weight (kg)", min_value=0.0, format="%.2f", key="prim_pack")
             
-            with col2:
+            with col4:
                 st.write("**Secondary Packaging**")
-                secondary_packaging_type = st.text_input("Secondary Packaging Type")
+                secondary_type = st.text_input("Secondary Packaging Type")
                 
-                col2a, col2b, col2c = st.columns(3)
-                with col2a:
-                    secondary_l = st.number_input("Secondary L (mm)", min_value=0.0, format="%.2f")
-                with col2b:
-                    secondary_w = st.number_input("Secondary W (mm)", min_value=0.0, format="%.2f")
-                with col2c:
-                    secondary_h = st.number_input("Secondary H (mm)", min_value=0.0, format="%.2f")
+                col4a, col4b, col4c = st.columns(3)
+                with col4a:
+                    secondary_l = st.number_input("Secondary L (mm)", min_value=0.0, format="%.0f", key="sec_l")
+                with col4b:
+                    secondary_w = st.number_input("Secondary W (mm)", min_value=0.0, format="%.0f", key="sec_w")
+                with col4c:
+                    secondary_h = st.number_input("Secondary H (mm)", min_value=0.0, format="%.0f", key="sec_h")
                 
-                col2d, col2e = st.columns(2)
-                with col2d:
-                    secondary_qty = st.number_input("Secondary Qty/Pack", min_value=0, step=1)
-                    secondary_empty_weight = st.number_input("Secondary Empty Weight", min_value=0.0, format="%.2f")
-                with col2e:
-                    secondary_pack_weight = st.number_input("Secondary Pack Weight", min_value=0.0, format="%.2f")
+                col4d, col4e = st.columns(2)
+                with col4d:
+                    secondary_qty = st.number_input("Secondary Qty/Pack", min_value=0, format="%d", key="sec_qty")
+                    secondary_empty_weight = st.number_input("Secondary Empty Weight (kg)", min_value=0.0, format="%.2f", key="sec_empty")
+                with col4e:
+                    secondary_pack_weight = st.number_input("Secondary Pack Weight (kg)", min_value=0.0, format="%.2f", key="sec_pack")
         
         with tab3:
             st.subheader("📋 Packaging Procedures")
             
-            # Dropdown for predefined procedures
-            packaging_type_options = ["Custom"] + list(template_manager.packaging_procedures.keys())
-            selected_packaging_type = st.selectbox("Select Packaging Type (for predefined procedures)", packaging_type_options)
+            # Auto-populate procedures if primary type is selected
+            procedure_steps = [""] * 10
+            if primary_type and primary_type in template_manager.packaging_procedures:
+                procedure_steps = template_manager.get_procedure_steps(primary_type)
+                st.info(f"Auto-populated procedures for {primary_type}")
             
-            if st.button("Load Predefined Procedures") and selected_packaging_type != "Custom":
-                st.session_state.procedure_steps = template_manager.get_procedure_steps(selected_packaging_type)
-                st.success(f"Loaded procedures for {selected_packaging_type}")
+            # Allow manual editing of procedure steps
+            col5, col6 = st.columns(2)
             
-            # Initialize procedure steps if not in session state
-            if 'procedure_steps' not in st.session_state:
-                st.session_state.procedure_steps = [""] * 10
+            with col5:
+                st.write("**Steps 1-5**")
+                step1 = st.text_area("Procedure Step 1", value=procedure_steps[0], key="step1")
+                step2 = st.text_area("Procedure Step 2", value=procedure_steps[1], key="step2")
+                step3 = st.text_area("Procedure Step 3", value=procedure_steps[2], key="step3")
+                step4 = st.text_area("Procedure Step 4", value=procedure_steps[3], key="step4")
+                step5 = st.text_area("Procedure Step 5", value=procedure_steps[4], key="step5")
             
-            st.write("**Procedure Steps (Maximum 10 steps)**")
-            procedure_steps = []
-            
-            for i in range(10):
-                step = st.text_area(f"Step {i+1}", 
-                                  value=st.session_state.procedure_steps[i] if i < len(st.session_state.procedure_steps) else "", 
-                                  key=f"step_{i}")
-                procedure_steps.append(step)
-            
-            # Approval section
-            st.write("**Approval Information**")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                issued_by = st.text_input("Issued By")
-            with col2:
-                reviewed_by = st.text_input("Reviewed By")
-            with col3:
-                approved_by = st.text_input("Approved By")
+            with col6:
+                st.write("**Steps 6-10**")
+                step6 = st.text_area("Procedure Step 6", value=procedure_steps[5], key="step6")
+                step7 = st.text_area("Procedure Step 7", value=procedure_steps[6], key="step7")
+                step8 = st.text_area("Procedure Step 8", value=procedure_steps[7], key="step8")
+                step9 = st.text_area("Procedure Step 9", value=procedure_steps[8], key="step9")
+                step10 = st.text_area("Procedure Step 10", value=procedure_steps[9], key="step10")
             
             # Additional fields
-            st.write("**Additional Information**")
-            col1, col2 = st.columns(2)
-            with col1:
+            st.subheader("📝 Additional Information")
+            col7, col8 = st.columns(2)
+            with col7:
                 problem_if_any = st.text_area("Problem If Any")
-            with col2:
                 caution = st.text_area("Caution")
+            
+            with col8:
+                st.write("**Approval**")
+                issued_by = st.text_input("Issued By")
+                reviewed_by = st.text_input("Reviewed By")
+                approved_by = st.text_input("Approved By")
         
         with tab4:
-            st.subheader("🖼️ Images & Generate Template")
+            st.subheader("🖼️ Images")
             
-            # Image upload section
-            st.write("**Upload Images (Optional)**")
-            col1, col2 = st.columns(2)
+            col9, col10 = st.columns(2)
             
-            with col1:
-                current_packaging_img = st.file_uploader("Current Packaging Image", type=['png', 'jpg', 'jpeg'], key="current")
-                primary_packaging_img = st.file_uploader("Primary Packaging Image", type=['png', 'jpg', 'jpeg'], key="primary")
+            with col9:
+                current_packaging_img = st.file_uploader("Current Packaging Image", type=['png', 'jpg', 'jpeg'])
+                primary_packaging_img = st.file_uploader("Primary Packaging Image", type=['png', 'jpg', 'jpeg'])
             
-            with col2:
-                secondary_packaging_img = st.file_uploader("Secondary Packaging Image", type=['png', 'jpg', 'jpeg'], key="secondary")
-                label_img = st.file_uploader("Label Image", type=['png', 'jpg', 'jpeg'], key="label")
+            with col10:
+                secondary_packaging_img = st.file_uploader("Secondary Packaging Image", type=['png', 'jpg', 'jpeg'])
+                label_img = st.file_uploader("Label Image", type=['png', 'jpg', 'jpeg'])
             
-            # Prepare form data
-            form_data = {
-                'Revision No.': revision_no,
-                'Date': str(date) if date else '',
-                'Vendor Code': vendor_code,
-                'Vendor Name': vendor_name,
-                'Vendor Location': vendor_location,
-                'Part No.': part_no,
-                'Part Description': part_description,
-                'Part Unit Weight': str(part_unit_weight) if part_unit_weight else '',
-                'Part Weight Unit': part_weight_unit,
-                'Part L': str(part_l) if part_l else '',
-                'Part W': str(part_w) if part_w else '',
-                'Part H': str(part_h) if part_h else '',
-                'Primary Packaging Type': primary_packaging_type,
-                'Primary L-mm': str(primary_l) if primary_l else '',
-                'Primary W-mm': str(primary_w) if primary_w else '',
-                'Primary H-mm': str(primary_h) if primary_h else '',
-                'Primary Qty/Pack': str(primary_qty) if primary_qty else '',
-                'Primary Empty Weight': str(primary_empty_weight) if primary_empty_weight else '',
-                'Primary Pack Weight': str(primary_pack_weight) if primary_pack_weight else '',
-                'Secondary Packaging Type': secondary_packaging_type,
-                'Secondary L-mm': str(secondary_l) if secondary_l else '',
-                'Secondary W-mm': str(secondary_w) if secondary_w else '',
-                'Secondary H-mm': str(secondary_h) if secondary_h else '',
-                'Secondary Qty/Pack': str(secondary_qty) if secondary_qty else '',
-                'Secondary Empty Weight': str(secondary_empty_weight) if secondary_empty_weight else '',
-                'Secondary Pack Weight': str(secondary_pack_weight) if secondary_pack_weight else '',
-                'Issued By': issued_by,
-                'Reviewed By': reviewed_by,
-                'Approved By': approved_by,
-                'Problem If Any': problem_if_any,
-                'Caution': caution
-            }
+            st.subheader("📁 Generate Template")
             
-            # Add procedure steps
-            for i, step in enumerate(procedure_steps):
-                form_data[f'Procedure Step {i+1}'] = step
-            
-            # Prepare images data
-            images_data = {}
-            if current_packaging_img:
-                images_data['Current Packaging'] = PILImage.open(current_packaging_img)
-            if primary_packaging_img:
-                images_data['Primary Packaging'] = PILImage.open(primary_packaging_img)
-            if secondary_packaging_img:
-                images_data['Secondary Packaging'] = PILImage.open(secondary_packaging_img)
-            if label_img:
-                images_data['Label'] = PILImage.open(label_img)
-            
-            # Generate template button
-            if st.button("🚀 Generate Packaging Template", type="primary"):
-                with st.spinner("Creating your packaging template..."):
-                    try:
-                        # Create template
-                        wb = template_manager.create_exact_template_excel()
-                        
-                        # Populate with data
-                        wb = template_manager.populate_template_with_data(wb, form_data, images_data)
-                        
-                        # Save to bytes
-                        excel_buffer = io.BytesIO()
-                        wb.save(excel_buffer)
-                        excel_buffer.seek(0)
-                        
-                        # Create filename with timestamp
-                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        filename = f"packaging_template_{timestamp}.xlsx"
-                        
-                        # Download button
-                        st.download_button(
-                            label="📥 Download Packaging Template",
-                            data=excel_buffer.getvalue(),
-                            file_name=filename,
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
-                        
-                        st.success("✅ Template generated successfully!")
-                        st.balloons()
-                        
-                    except Exception as e:
-                        st.error(f"Error generating template: {str(e)}")
+            if st.button("🚀 Generate Excel Template", type="primary"):
+                # Compile form data
+                form_data = {
+                    'Revision No.': revision_no,
+                    'Date': str(date) if date else '',
+                    'Vendor Code': vendor_code,
+                    'Vendor Name': vendor_name,
+                    'Vendor Location': vendor_location,
+                    'Part No.': part_no,
+                    'Part Description': part_description,
+                    'Part Unit Weight': str(part_unit_weight) if part_unit_weight > 0 else '',
+                    'Part Weight Unit': part_weight_unit,
+                    'Part L': str(part_l) if part_l > 0 else '',
+                    'Part W': str(part_w) if part_w > 0 else '',
+                    'Part H': str(part_h) if part_h > 0 else '',
+                    'Primary Packaging Type': primary_type,
+                    'Primary L-mm': str(primary_l) if primary_l > 0 else '',
+                    'Primary W-mm': str(primary_w) if primary_w > 0 else '',
+                    'Primary H-mm': str(primary_h) if primary_h > 0 else '',
+                    'Primary Qty/Pack': str(primary_qty) if primary_qty > 0 else '',
+                    'Primary Empty Weight': str(primary_empty_weight) if primary_empty_weight > 0 else '',
+                    'Primary Pack Weight': str(primary_pack_weight) if primary_pack_weight > 0 else '',
+                    'Secondary Packaging Type': secondary_type,
+                    'Secondary L-mm': str(secondary_l) if secondary_l > 0 else '',
+                    'Secondary W-mm': str(secondary_w) if secondary_w > 0 else '',
+                    'Secondary H-mm': str(secondary_h) if secondary_h > 0 else '',
+                    'Secondary Qty/Pack': str(secondary_qty) if secondary_qty > 0 else '',
+                    'Secondary Empty Weight': str(secondary_empty_weight) if secondary_empty_weight > 0 else '',
+                    'Secondary Pack Weight': str(secondary_pack_weight) if secondary_pack_weight > 0 else '',
+                    'Procedure Step 1': step1,
+                    'Procedure Step 2': step2,
+                    'Procedure Step 3': step3,
+                    'Procedure Step 4': step4,
+                    'Procedure Step 5': step5,
+                    'Procedure Step 6': step6,
+                    'Procedure Step 7': step7,
+                    'Procedure Step 8': step8,
+                    'Procedure Step 9': step9,
+                    'Procedure Step 10': step10,
+                    'Issued By': issued_by,
+                    'Reviewed By': reviewed_by,
+                    'Approved By': approved_by,
+                    'Problem If Any': problem_if_any,
+                    'Caution': caution
+                }
+                
+                # Process images
+                images_data = {}
+                if current_packaging_img:
+                    images_data['Current Packaging'] = PILImage.open(current_packaging_img)
+                if primary_packaging_img:
+                    images_data['Primary Packaging'] = PILImage.open(primary_packaging_img)
+                if secondary_packaging_img:
+                    images_data['Secondary Packaging'] = PILImage.open(secondary_packaging_img)
+                if label_img:
+                    images_data['Label'] = PILImage.open(label_img)
+                
+                # Generate Excel file
+                try:
+                    wb = template_manager.create_exact_template_excel()
+                    wb = template_manager.populate_template_with_data(wb, form_data, images_data)
+                    
+                    # Save to buffer
+                    buffer = io.BytesIO()
+                    wb.save(buffer)
+                    buffer.seek(0)
+                    
+                    # Provide download
+                    st.success("✅ Template generated successfully!")
+                    st.download_button(
+                        label="⬇️ Download Excel Template",
+                        data=buffer.getvalue(),
+                        file_name=f"Packaging_Template_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                    
+                except Exception as e:
+                    st.error(f"Error generating template: {str(e)}")
     
-    elif mode == "Upload & Process Existing":
-        st.header("📂 Upload & Process Existing Template")
+    else:  # Upload & Modify Existing mode
+        st.header("📁 Upload & Modify Existing Template")
         
-        uploaded_file = st.file_uploader("Upload Excel file to extract data", type=['xlsx', 'xls'])
+        uploaded_file = st.file_uploader(
+            "Upload Existing Excel Template",
+            type=['xlsx', 'xls'],
+            help="Upload an existing packaging template to extract and modify data"
+        )
         
-        if uploaded_file:
-            # Extract data from uploaded file
-            with st.spinner("Extracting data from uploaded file..."):
+        if uploaded_file is not None:
+            st.success("File uploaded successfully!")
+            
+            # Extract data and images from uploaded file
+            with st.spinner("Extracting data from Excel file..."):
                 extracted_data = template_manager.extract_data_from_excel(uploaded_file)
+                
+                # Reset file pointer for image extraction
+                uploaded_file.seek(0)
                 extracted_images = template_manager.extract_images_from_excel(uploaded_file)
             
             if extracted_data:
-                st.success(f"Successfully extracted {len(extracted_data)} fields from the file")
+                st.subheader("📊 Extracted Data")
+                with st.expander("View Extracted Fields", expanded=False):
+                    for key, value in extracted_data.items():
+                        if value:
+                            st.write(f"**{key}**: {value}")
                 
-                # Show extracted data in an expandable section
-                with st.expander("View Extracted Data"):
+                # Create editable form with extracted data
+                st.subheader("✏️ Edit Template Data")
+                
+                # Create tabs for editing
+                edit_tab1, edit_tab2, edit_tab3, edit_tab4 = st.tabs(["Basic Info", "Packaging Details", "Procedures", "Generate Updated"])
+                
+                with edit_tab1:
                     col1, col2 = st.columns(2)
+                    
                     with col1:
-                        for key, value in list(extracted_data.items())[:len(extracted_data)//2]:
-                            if value:
-                                st.write(f"**{key}:** {value}")
+                        e_revision_no = st.text_input("Revision No.", value=extracted_data.get('Revision No.', 'Revision 1'))
+                        e_date = st.date_input("Date", value=datetime.now().date())
+                        
+                        st.subheader("🏢 Vendor Information")
+                        e_vendor_code = st.text_input("Vendor Code", value=extracted_data.get('Vendor Code', ''))
+                        e_vendor_name = st.text_input("Vendor Name", value=extracted_data.get('Vendor Name', ''))
+                        e_vendor_location = st.text_input("Vendor Location", value=extracted_data.get('Vendor Location', ''))
+                    
                     with col2:
-                        for key, value in list(extracted_data.items())[len(extracted_data)//2:]:
-                            if value:
-                                st.write(f"**{key}:** {value}")
+                        st.subheader("🔧 Part Information")
+                        e_part_no = st.text_input("Part No.", value=extracted_data.get('Part No.', ''))
+                        e_part_description = st.text_area("Part Description", value=extracted_data.get('Part Description', ''), height=100)
+                        
+                        col2a, col2b = st.columns(2)
+                        with col2a:
+                            e_part_unit_weight = st.text_input("Part Unit Weight", value=extracted_data.get('Part Unit Weight', ''))
+                        with col2b:
+                            e_part_weight_unit = st.selectbox("Weight Unit", ["kg", "g", "lbs"], 
+                                                            index=0 if extracted_data.get('Part Weight Unit', 'kg') == 'kg' else 1)
+                        
+                        st.write("**Part Dimensions**")
+                        col2c, col2d, col2e = st.columns(3)
+                        with col2c:
+                            e_part_l = st.text_input("Length (mm)", value=extracted_data.get('Part L', ''))
+                        with col2d:
+                            e_part_w = st.text_input("Width (mm)", value=extracted_data.get('Part W', ''))
+                        with col2e:
+                            e_part_h = st.text_input("Height (mm)", value=extracted_data.get('Part H', ''))
                 
-                # Create tabs for packaging procedure selection
-                tab1, tab2 = st.tabs(["📋 Packaging Procedures", "🚀 Generate Template"])
+                with edit_tab2:
+                    col3, col4 = st.columns(2)
+                    
+                    with col3:
+                        st.write("**Primary Packaging**")
+                        current_primary_type = extracted_data.get('Primary Packaging Type', '')
+                        
+                        # Check if the extracted type is in predefined list
+                        predefined_types = ["", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS", "Custom"]
+                        if current_primary_type and current_primary_type not in predefined_types:
+                            predefined_types.append(current_primary_type)
+                        
+                        e_primary_type = st.selectbox("Primary Packaging Type", predefined_types,
+                                                    index=predefined_types.index(current_primary_type) if current_primary_type in predefined_types else 0)
+                        
+                        col3a, col3b, col3c = st.columns(3)
+                        with col3a:
+                            e_primary_l = st.text_input("Primary L (mm)", value=extracted_data.get('Primary L-mm', ''), key="e_prim_l")
+                        with col3b:
+                            e_primary_w = st.text_input("Primary W (mm)", value=extracted_data.get('Primary W-mm', ''), key="e_prim_w")
+                        with col3c:
+                            e_primary_h = st.text_input("Primary H (mm)", value=extracted_data.get('Primary H-mm', ''), key="e_prim_h")
+                        
+                        col3d, col3e = st.columns(2)
+                        with col3d:
+                            e_primary_qty = st.text_input("Primary Qty/Pack", value=extracted_data.get('Primary Qty/Pack', ''), key="e_prim_qty")
+                            e_primary_empty_weight = st.text_input("Primary Empty Weight (kg)", value=extracted_data.get('Primary Empty Weight', ''), key="e_prim_empty")
+                        with col3e:
+                            e_primary_pack_weight = st.text_input("Primary Pack Weight (kg)", value=extracted_data.get('Primary Pack Weight', ''), key="e_prim_pack")
+                    
+                    with col4:
+                        st.write("**Secondary Packaging**")
+                        e_secondary_type = st.text_input("Secondary Packaging Type", value=extracted_data.get('Secondary Packaging Type', ''))
+                        
+                        col4a, col4b, col4c = st.columns(3)
+                        with col4a:
+                            e_secondary_l = st.text_input("Secondary L (mm)", value=extracted_data.get('Secondary L-mm', ''), key="e_sec_l")
+                        with col4b:
+                            e_secondary_w = st.text_input("Secondary W (mm)", value=extracted_data.get('Secondary W-mm', ''), key="e_sec_w")
+                        with col4c:
+                            e_secondary_h = st.text_input("Secondary H (mm)", value=extracted_data.get('Secondary H-mm', ''), key="e_sec_h")
+                        
+                        col4d, col4e = st.columns(2)
+                        with col4d:
+                            e_secondary_qty = st.text_input("Secondary Qty/Pack", value=extracted_data.get('Secondary Qty/Pack', ''), key="e_sec_qty")
+                            e_secondary_empty_weight = st.text_input("Secondary Empty Weight (kg)", value=extracted_data.get('Secondary Empty Weight', ''), key="e_sec_empty")
+                        with col4e:
+                            e_secondary_pack_weight = st.text_input("Secondary Pack Weight (kg)", value=extracted_data.get('Secondary Pack Weight', ''), key="e_sec_pack")
                 
-                with tab1:
-                    st.subheader("Select Packaging Procedure")
+                with edit_tab3:
+                    st.subheader("📋 Packaging Procedures")
                     
-                    # Display 5 packaging procedure options
-                    procedure_options = list(template_manager.packaging_procedures.keys())
+                    # Check if we should auto-populate procedures based on primary type
+                    if e_primary_type in template_manager.packaging_procedures:
+                        if st.button("🔄 Auto-populate Procedures", help=f"Fill procedures for {e_primary_type}"):
+                            auto_procedures = template_manager.get_procedure_steps(e_primary_type)
+                            for i, procedure in enumerate(auto_procedures, 1):
+                                extracted_data[f'Procedure Step {i}'] = procedure
+                            st.success(f"Auto-populated procedures for {e_primary_type}")
+                            st.rerun()
                     
-                    # Create cards for each procedure type
-                    for i, procedure_type in enumerate(procedure_options):
-                        with st.container():
-                            col1, col2 = st.columns([1, 3])
-                            with col1:
-                                if st.button(f"Select {procedure_type}", key=f"select_{i}", type="primary"):
-                                    st.session_state.selected_procedure = procedure_type
-                                    st.session_state.selected_steps = template_manager.get_procedure_steps(procedure_type)
-                                    st.success(f"Selected: {procedure_type}")
+                    col5, col6 = st.columns(2)
+                    
+                    with col5:
+                        st.write("**Steps 1-5**")
+                        e_step1 = st.text_area("Procedure Step 1", value=extracted_data.get('Procedure Step 1', ''), key="e_step1")
+                        e_step2 = st.text_area("Procedure Step 2", value=extracted_data.get('Procedure Step 2', ''), key="e_step2")
+                        e_step3 = st.text_area("Procedure Step 3", value=extracted_data.get('Procedure Step 3', ''), key="e_step3")
+                        e_step4 = st.text_area("Procedure Step 4", value=extracted_data.get('Procedure Step 4', ''), key="e_step4")
+                        e_step5 = st.text_area("Procedure Step 5", value=extracted_data.get('Procedure Step 5', ''), key="e_step5")
+                    
+                    with col6:
+                        st.write("**Steps 6-10**")
+                        e_step6 = st.text_area("Procedure Step 6", value=extracted_data.get('Procedure Step 6', ''), key="e_step6")
+                        e_step7 = st.text_area("Procedure Step 7", value=extracted_data.get('Procedure Step 7', ''), key="e_step7")
+                        e_step8 = st.text_area("Procedure Step 8", value=extracted_data.get('Procedure Step 8', ''), key="e_step8")
+                        e_step9 = st.text_area("Procedure Step 9", value=extracted_data.get('Procedure Step 9', ''), key="e_step9")
+                        e_step10 = st.text_area("Procedure Step 10", value=extracted_data.get('Procedure Step 10', ''), key="e_step10")
+                    
+                    # Additional fields
+                    st.subheader("📝 Additional Information")
+                    col7, col8 = st.columns(2)
+                    with col7:
+                        e_problem_if_any = st.text_area("Problem If Any", value=extracted_data.get('Problem If Any', ''))
+                        e_caution = st.text_area("Caution", value=extracted_data.get('Caution', ''))
+                    
+                    with col8:
+                        st.write("**Approval**")
+                        e_issued_by = st.text_input("Issued By", value=extracted_data.get('Issued By', ''))
+                        e_reviewed_by = st.text_input("Reviewed By", value=extracted_data.get('Reviewed By', ''))
+                        e_approved_by = st.text_input("Approved By", value=extracted_data.get('Approved By', ''))
+                
+                with edit_tab4:
+                    st.subheader("🖼️ Images")
+                    
+                    # Show extracted images if any
+                    if any(extracted_images.values()):
+                        st.write("**Extracted Images:**")
+                        img_cols = st.columns(4)
+                        for i, (category, image) in enumerate(extracted_images.items()):
+                            with img_cols[i % 4]:
+                                if image:
+                                    st.write(f"**{category}**")
+                                    st.image(image, width=150)
+                                    st.success("✅ Found")
+                                else:
+                                    st.write(f"**{category}**")
+                                    st.info("❌ Not found")
+                    
+                    # Option to upload new images
+                    st.write("**Upload New Images (Optional):**")
+                    col9, col10 = st.columns(2)
+                    
+                    with col9:
+                        new_current_img = st.file_uploader("Replace Current Packaging Image", type=['png', 'jpg', 'jpeg'], key="new_current")
+                        new_primary_img = st.file_uploader("Replace Primary Packaging Image", type=['png', 'jpg', 'jpeg'], key="new_primary")
+                    
+                    with col10:
+                        new_secondary_img = st.file_uploader("Replace Secondary Packaging Image", type=['png', 'jpg', 'jpeg'], key="new_secondary")
+                        new_label_img = st.file_uploader("Replace Label Image", type=['png', 'jpg', 'jpeg'], key="new_label")
+                    
+                    st.subheader("📁 Generate Updated Template")
+                    
+                    if st.button("🚀 Generate Updated Excel Template", type="primary"):
+                        # Compile updated form data
+                        updated_form_data = {
+                            'Revision No.': e_revision_no,
+                            'Date': str(e_date) if e_date else '',
+                            'Vendor Code': e_vendor_code,
+                            'Vendor Name': e_vendor_name,
+                            'Vendor Location': e_vendor_location,
+                            'Part No.': e_part_no,
+                            'Part Description': e_part_description,
+                            'Part Unit Weight': e_part_unit_weight,
+                            'Part Weight Unit': e_part_weight_unit,
+                            'Part L': e_part_l,
+                            'Part W': e_part_w,
+                            'Part H': e_part_h,
+                            'Primary Packaging Type': e_primary_type,
+                            'Primary L-mm': e_primary_l,
+                            'Primary W-mm': e_primary_w,
+                            'Primary H-mm': e_primary_h,
+                            'Primary Qty/Pack': e_primary_qty,
+                            'Primary Empty Weight': e_primary_empty_weight,
+                            'Primary Pack Weight': e_primary_pack_weight,
+                            'Secondary Packaging Type': e_secondary_type,
+                            'Secondary L-mm': e_secondary_l,
+                            'Secondary W-mm': e_secondary_w,
+                            'Secondary H-mm': e_secondary_h,
+                            'Secondary Qty/Pack': e_secondary_qty,
+                            'Secondary Empty Weight': e_secondary_empty_weight,
+                            'Secondary Pack Weight': e_secondary_pack_weight,
+                            'Procedure Step 1': e_step1,
+                            'Procedure Step 2': e_step2,
+                            'Procedure Step 3': e_step3,
+                            'Procedure Step 4': e_step4,
+                            'Procedure Step 5': e_step5,
+                            'Procedure Step 6': e_step6,
+                            'Procedure Step 7': e_step7,
+                            'Procedure Step 8': e_step8,
+                            'Procedure Step 9': e_step9,
+                            'Procedure Step 10': e_step10,
+                            'Issued By': e_issued_by,
+                            'Reviewed By': e_reviewed_by,
+                            'Approved By': e_approved_by,
+                            'Problem If Any': e_problem_if_any,
+                            'Caution': e_caution
+                        }
+                        
+                        # Use extracted images, but replace with new ones if uploaded
+                        final_images = extracted_images.copy()
+                        if new_current_img:
+                            final_images['Current Packaging'] = PILImage.open(new_current_img)
+                        if new_primary_img:
+                            final_images['Primary Packaging'] = PILImage.open(new_primary_img)
+                        if new_secondary_img:
+                            final_images['Secondary Packaging'] = PILImage.open(new_secondary_img)
+                        if new_label_img:
+                            final_images['Label'] = PILImage.open(new_label_img)
+                        
+                        # Generate Excel file
+                        try:
+                            wb = template_manager.create_exact_template_excel()
+                            wb = template_manager.populate_template_with_data(wb, updated_form_data, final_images)
                             
-                            with col2:
-                                st.write(f"**{procedure_type}**")
-                                # Show first 2 steps as preview
-                                steps = template_manager.get_procedure_steps(procedure_type)
-                                for j, step in enumerate(steps[:2]):
-                                    if step.strip():
-                                        st.write(f"{j+1}. {step}")
-                                if len([s for s in steps if s.strip()]) > 2:
-                                    st.write("...")
+                            # Save to buffer
+                            buffer = io.BytesIO()
+                            wb.save(buffer)
+                            buffer.seek(0)
                             
-                            st.divider()
-                    
-                    # Show selected procedure details
-                    if hasattr(st.session_state, 'selected_procedure'):
-                        st.subheader(f"Selected Procedure: {st.session_state.selected_procedure}")
-                        
-                        with st.expander("View All Steps", expanded=True):
-                            steps = st.session_state.selected_steps
-                            for i, step in enumerate(steps):
-                                if step.strip():
-                                    st.write(f"**Step {i+1}:** {step}")
-                
-                with tab2:
-                    st.subheader("Generate Template with Selected Procedure")
-                    
-                    if hasattr(st.session_state, 'selected_procedure'):
-                        st.info(f"Using procedure: **{st.session_state.selected_procedure}**")
-                        
-                        # Prepare form data with selected procedure steps
-                        form_data = extracted_data.copy()
-                        
-                        # Add selected procedure steps
-                        if hasattr(st.session_state, 'selected_steps'):
-                            for i, step in enumerate(st.session_state.selected_steps):
-                                form_data[f'Procedure Step {i+1}'] = step
-                        
-                        # Generate template button
-                        if st.button("🚀 Generate Template with Selected Procedure", type="primary"):
-                            with st.spinner("Generating template with selected procedure..."):
-                                try:
-                                    # Create template
-                                    wb = template_manager.create_exact_template_excel()
-                                    
-                                    # Populate with data and selected procedure
-                                    wb = template_manager.populate_template_with_data(wb, form_data, extracted_images)
-                                    
-                                    # Save to bytes
-                                    excel_buffer = io.BytesIO()
-                                    wb.save(excel_buffer)
-                                    excel_buffer.seek(0)
-                                    
-                                    # Create filename with timestamp
-                                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                                    filename = f"packaging_template_{st.session_state.selected_procedure.replace(' ', '_')}_{timestamp}.xlsx"
-                                    
-                                    # Download button
-                                    st.download_button(
-                                        label="📥 Download Template",
-                                        data=excel_buffer.getvalue(),
-                                        file_name=filename,
-                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                    )
-                                    
-                                    st.success("✅ Template generated successfully!")
-                                    st.balloons()
-                                    
-                                except Exception as e:
-                                    st.error(f"Error generating template: {str(e)}")
-                    else:
-                        st.warning("⚠️ Please select a packaging procedure from the 'Packaging Procedures' tab first.")
-                        
+                            # Provide download
+                            st.success("✅ Updated template generated successfully!")
+                            st.download_button(
+                                label="⬇️ Download Updated Excel Template",
+                                data=buffer.getvalue(),
+                                file_name=f"Updated_Packaging_Template_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            )
+                            
+                        except Exception as e:
+                            st.error(f"Error generating updated template: {str(e)}")
+                            st.write("Debug info:", str(e))
             else:
-                st.warning("Could not extract data from the uploaded file. Please ensure it's a valid Excel file with the expected format.")
+                st.warning("Could not extract data from the uploaded file. Please check the file format and try again.")
 
 if __name__ == "__main__":
     main()
