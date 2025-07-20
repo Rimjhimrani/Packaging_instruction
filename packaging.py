@@ -867,8 +867,8 @@ def main():
                     except Exception as e:
                         st.error(f"Error generating template: {str(e)}")
     
-    elif mode == "Upload & Modify Existing":
-        st.header("📂 Upload & Modify Existing Template")
+    elif mode == "Upload & Process Existing":
+        st.header("📂 Upload & Process Existing Template")
         
         uploaded_file = st.file_uploader("Upload Excel file to extract data", type=['xlsx', 'xls'])
         
@@ -883,105 +883,106 @@ def main():
                 
                 # Show extracted data in an expandable section
                 with st.expander("View Extracted Data"):
-                    for key, value in extracted_data.items():
-                        if value:
-                            st.write(f"**{key}:** {value}")
-                
-                # Allow editing of extracted data
-                st.subheader("Edit Extracted Data")
-                
-                # Create form for editing
-                with st.form("edit_form"):
                     col1, col2 = st.columns(2)
-                    
-                    # Initialize form with extracted data
-                    form_data = {}
-                    
                     with col1:
-                        st.write("**Basic Information**")
-                        form_data['Revision No.'] = st.text_input("Revision No.", value=extracted_data.get('Revision No.', ''))
-                        form_data['Date'] = st.text_input("Date", value=extracted_data.get('Date', ''))
-                        
-                        st.write("**Vendor Information**")
-                        form_data['Vendor Code'] = st.text_input("Vendor Code", value=extracted_data.get('Vendor Code', ''))
-                        form_data['Vendor Name'] = st.text_input("Vendor Name", value=extracted_data.get('Vendor Name', ''))
-                        form_data['Vendor Location'] = st.text_input("Vendor Location", value=extracted_data.get('Vendor Location', ''))
-                        
-                        st.write("**Part Information**")
-                        form_data['Part No.'] = st.text_input("Part No.", value=extracted_data.get('Part No.', ''))
-                        form_data['Part Description'] = st.text_area("Part Description", value=extracted_data.get('Part Description', ''))
-                        form_data['Part Unit Weight'] = st.text_input("Part Unit Weight", value=extracted_data.get('Part Unit Weight', ''))
-                        form_data['Part L'] = st.text_input("Part L", value=extracted_data.get('Part L', ''))
-                        form_data['Part W'] = st.text_input("Part W", value=extracted_data.get('Part W', ''))
-                        form_data['Part H'] = st.text_input("Part H", value=extracted_data.get('Part H', ''))
-                    
+                        for key, value in list(extracted_data.items())[:len(extracted_data)//2]:
+                            if value:
+                                st.write(f"**{key}:** {value}")
                     with col2:
-                        st.write("**Primary Packaging**")
-                        form_data['Primary Packaging Type'] = st.text_input("Primary Packaging Type", value=extracted_data.get('Primary Packaging Type', ''))
-                        form_data['Primary L-mm'] = st.text_input("Primary L-mm", value=extracted_data.get('Primary L-mm', ''))
-                        form_data['Primary W-mm'] = st.text_input("Primary W-mm", value=extracted_data.get('Primary W-mm', ''))
-                        form_data['Primary H-mm'] = st.text_input("Primary H-mm", value=extracted_data.get('Primary H-mm', ''))
-                        form_data['Primary Qty/Pack'] = st.text_input("Primary Qty/Pack", value=extracted_data.get('Primary Qty/Pack', ''))
-                        form_data['Primary Empty Weight'] = st.text_input("Primary Empty Weight", value=extracted_data.get('Primary Empty Weight', ''))
-                        form_data['Primary Pack Weight'] = st.text_input("Primary Pack Weight", value=extracted_data.get('Primary Pack Weight', ''))
+                        for key, value in list(extracted_data.items())[len(extracted_data)//2:]:
+                            if value:
+                                st.write(f"**{key}:** {value}")
+                
+                # Create tabs for packaging procedure selection
+                tab1, tab2 = st.tabs(["📋 Packaging Procedures", "🚀 Generate Template"])
+                
+                with tab1:
+                    st.subheader("Select Packaging Procedure")
+                    
+                    # Display 5 packaging procedure options
+                    procedure_options = list(template_manager.packaging_procedures.keys())
+                    
+                    # Create cards for each procedure type
+                    for i, procedure_type in enumerate(procedure_options):
+                        with st.container():
+                            col1, col2 = st.columns([1, 3])
+                            with col1:
+                                if st.button(f"Select {procedure_type}", key=f"select_{i}", type="primary"):
+                                    st.session_state.selected_procedure = procedure_type
+                                    st.session_state.selected_steps = template_manager.get_procedure_steps(procedure_type)
+                                    st.success(f"Selected: {procedure_type}")
+                            
+                            with col2:
+                                st.write(f"**{procedure_type}**")
+                                # Show first 2 steps as preview
+                                steps = template_manager.get_procedure_steps(procedure_type)
+                                for j, step in enumerate(steps[:2]):
+                                    if step.strip():
+                                        st.write(f"{j+1}. {step}")
+                                if len([s for s in steps if s.strip()]) > 2:
+                                    st.write("...")
+                            
+                            st.divider()
+                    
+                    # Show selected procedure details
+                    if hasattr(st.session_state, 'selected_procedure'):
+                        st.subheader(f"Selected Procedure: {st.session_state.selected_procedure}")
                         
-                        st.write("**Secondary Packaging**")
-                        form_data['Secondary Packaging Type'] = st.text_input("Secondary Packaging Type", value=extracted_data.get('Secondary Packaging Type', ''))
-                        form_data['Secondary L-mm'] = st.text_input("Secondary L-mm", value=extracted_data.get('Secondary L-mm', ''))
-                        form_data['Secondary W-mm'] = st.text_input("Secondary W-mm", value=extracted_data.get('Secondary W-mm', ''))
-                        form_data['Secondary H-mm'] = st.text_input("Secondary H-mm", value=extracted_data.get('Secondary H-mm', ''))
-                        form_data['Secondary Qty/Pack'] = st.text_input("Secondary Qty/Pack", value=extracted_data.get('Secondary Qty/Pack', ''))
-                        form_data['Secondary Empty Weight'] = st.text_input("Secondary Empty Weight", value=extracted_data.get('Secondary Empty Weight', ''))
-                        form_data['Secondary Pack Weight'] = st.text_input("Secondary Pack Weight", value=extracted_data.get('Secondary Pack Weight', ''))
+                        with st.expander("View All Steps", expanded=True):
+                            steps = st.session_state.selected_steps
+                            for i, step in enumerate(steps):
+                                if step.strip():
+                                    st.write(f"**Step {i+1}:** {step}")
+                
+                with tab2:
+                    st.subheader("Generate Template with Selected Procedure")
                     
-                    # Procedure steps
-                    st.write("**Procedure Steps**")
-                    for i in range(1, 11):
-                        step_key = f'Procedure Step {i}'
-                        form_data[step_key] = st.text_area(f"Step {i}", value=extracted_data.get(step_key, ''), key=f"proc_step_{i}")
-                    
-                    # Approval and additional info
-                    col3, col4 = st.columns(2)
-                    with col3:
-                        form_data['Issued By'] = st.text_input("Issued By", value=extracted_data.get('Issued By', ''))
-                        form_data['Reviewed By'] = st.text_input("Reviewed By", value=extracted_data.get('Reviewed By', ''))
-                        form_data['Approved By'] = st.text_input("Approved By", value=extracted_data.get('Approved By', ''))
-                    with col4:
-                        form_data['Problem If Any'] = st.text_area("Problem If Any", value=extracted_data.get('Problem If Any', ''))
-                        form_data['Caution'] = st.text_area("Caution", value=extracted_data.get('Caution', ''))
-                    
-                    # Generate modified template
-                    if st.form_submit_button("🚀 Generate Modified Template", type="primary"):
-                        with st.spinner("Generating modified template..."):
-                            try:
-                                # Create template
-                                wb = template_manager.create_exact_template_excel()
-                                
-                                # Populate with modified data
-                                wb = template_manager.populate_template_with_data(wb, form_data, extracted_images)
-                                
-                                # Save to bytes
-                                excel_buffer = io.BytesIO()
-                                wb.save(excel_buffer)
-                                excel_buffer.seek(0)
-                                
-                                # Create filename with timestamp
-                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                                filename = f"modified_packaging_template_{timestamp}.xlsx"
-                                
-                                # Download button
-                                st.download_button(
-                                    label="📥 Download Modified Template",
-                                    data=excel_buffer.getvalue(),
-                                    file_name=filename,
-                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                )
-                                
-                                st.success("✅ Modified template generated successfully!")
-                                st.balloons()
-                                
-                            except Exception as e:
-                                st.error(f"Error generating modified template: {str(e)}")
+                    if hasattr(st.session_state, 'selected_procedure'):
+                        st.info(f"Using procedure: **{st.session_state.selected_procedure}**")
+                        
+                        # Prepare form data with selected procedure steps
+                        form_data = extracted_data.copy()
+                        
+                        # Add selected procedure steps
+                        if hasattr(st.session_state, 'selected_steps'):
+                            for i, step in enumerate(st.session_state.selected_steps):
+                                form_data[f'Procedure Step {i+1}'] = step
+                        
+                        # Generate template button
+                        if st.button("🚀 Generate Template with Selected Procedure", type="primary"):
+                            with st.spinner("Generating template with selected procedure..."):
+                                try:
+                                    # Create template
+                                    wb = template_manager.create_exact_template_excel()
+                                    
+                                    # Populate with data and selected procedure
+                                    wb = template_manager.populate_template_with_data(wb, form_data, extracted_images)
+                                    
+                                    # Save to bytes
+                                    excel_buffer = io.BytesIO()
+                                    wb.save(excel_buffer)
+                                    excel_buffer.seek(0)
+                                    
+                                    # Create filename with timestamp
+                                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                    filename = f"packaging_template_{st.session_state.selected_procedure.replace(' ', '_')}_{timestamp}.xlsx"
+                                    
+                                    # Download button
+                                    st.download_button(
+                                        label="📥 Download Template",
+                                        data=excel_buffer.getvalue(),
+                                        file_name=filename,
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    )
+                                    
+                                    st.success("✅ Template generated successfully!")
+                                    st.balloons()
+                                    
+                                except Exception as e:
+                                    st.error(f"Error generating template: {str(e)}")
+                    else:
+                        st.warning("⚠️ Please select a packaging procedure from the 'Packaging Procedures' tab first.")
+                        
             else:
                 st.warning("Could not extract data from the uploaded file. Please ensure it's a valid Excel file with the expected format.")
 
