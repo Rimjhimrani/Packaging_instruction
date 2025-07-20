@@ -74,6 +74,58 @@ class ExactPackagingTemplateManager:
             'Caution': ''
         }
     
+    def extract_images_from_excel(self, uploaded_file):
+        """Extract images from Excel file"""
+        images_data = {
+            'Current Packaging': None,
+            'Primary Packaging': None,
+            'Secondary Packaging': None,
+            'Label': None
+        }
+        
+        try:
+            # Save uploaded file to temporary location
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+                tmp_file.write(uploaded_file.getvalue())
+                tmp_file_path = tmp_file.name
+            
+            # Load workbook and extract images
+            wb = load_workbook(tmp_file_path)
+            ws = wb.active
+            
+            # Extract all images from the worksheet
+            if hasattr(ws, '_images') and ws._images:
+                for idx, img in enumerate(ws._images):
+                    # Convert image to PIL Image
+                    image_stream = io.BytesIO(img._data())
+                    pil_image = PILImage.open(image_stream)
+                    
+                    # Get anchor information to determine image location
+                    anchor = img.anchor
+                    if hasattr(anchor, '_from'):
+                        col_idx = anchor._from.col
+                        row_idx = anchor._from.row
+                        
+                        # Determine image type based on location
+                        # Adjust these ranges based on your template layout
+                        if 0 <= col_idx <= 2 and 31 <= row_idx <= 37:  # Primary packaging area (A32:C37)
+                            images_data['Primary Packaging'] = pil_image
+                        elif 4 <= col_idx <= 5 and 31 <= row_idx <= 37:  # Secondary packaging area (E32:F37)
+                            images_data['Secondary Packaging'] = pil_image
+                        elif 7 <= col_idx <= 10 and 31 <= row_idx <= 37:  # Label area (H32:K37)
+                            images_data['Label'] = pil_image
+                        elif col_idx == 11:  # Current packaging column (L)
+                            images_data['Current Packaging'] = pil_image
+            
+            # Clean up temporary file
+            os.unlink(tmp_file_path)
+            
+            return images_data
+            
+        except Exception as e:
+            st.warning(f"Could not extract images: {str(e)}")
+            return images_data
+    
     def apply_border_to_range(self, ws, start_cell, end_cell):
         """Apply borders to a range of cells"""
         border = Border(left=Side(style='thin'), right=Side(style='thin'), 
@@ -90,6 +142,36 @@ class ExactPackagingTemplateManager:
                 cell = ws.cell(row=row, column=col+1)
                 cell.border = border
     
+    def add_image_to_cell_range(self, ws, pil_image, start_cell, end_cell):
+        """Add PIL image to specified cell range in worksheet"""
+        try:
+            # Convert PIL image to bytes
+            img_buffer = io.BytesIO()
+            pil_image.save(img_buffer, format='PNG')
+            img_buffer.seek(0)
+            
+            # Create openpyxl Image
+            img = Image(img_buffer)
+            
+            # Calculate cell dimensions (approximate)
+            start_col_letter = start_cell[0]
+            start_row = int(start_cell[1:])
+            end_col_letter = end_cell[0]
+            end_row = int(end_cell[1:])
+            
+            # Estimate size based on merged cell area (adjust as needed)
+            img.width = 120  # Adjust based on your needs
+            img.height = 80  # Adjust based on your needs
+            
+            # Add image to worksheet
+            ws.add_image(img, start_cell)
+            
+            return True
+            
+        except Exception as e:
+            st.warning(f"Could not add image to worksheet: {str(e)}")
+            return False
+
     def create_exact_template_excel(self):
         """Create the exact Excel template matching the image"""
         wb = openpyxl.Workbook()
@@ -685,6 +767,38 @@ class ExactPackagingTemplateManager:
                 'secondary pack weight': 'Secondary Pack Weight',
                 'secondary_pack_weight': 'Secondary Pack Weight',
                 
+                # Packaging Procedures
+                'procedure step 1': 'Procedure Step 1',
+                'step 1': 'Procedure Step 1',
+                'procedure_step_1': 'Procedure Step 1',
+                'procedure step 2': 'Procedure Step 2',
+                'step 2': 'Procedure Step 2',
+                'procedure_step_2': 'Procedure Step 2',
+                'procedure step 3': 'Procedure Step 3',
+                'step 3': 'Procedure Step 3',
+                'procedure_step_3': 'Procedure Step 3',
+                'procedure step 4': 'Procedure Step 4',
+                'step 4': 'Procedure Step 4',
+                'procedure_step_4': 'Procedure Step 4',
+                'procedure step 5': 'Procedure Step 5',
+                'step 5': 'Procedure Step 5',
+                'procedure_step_5': 'Procedure Step 5',
+                'procedure step 6': 'Procedure Step 6',
+                'step 6': 'Procedure Step 6',
+                'procedure_step_6': 'Procedure Step 6',
+                'procedure step 7': 'Procedure Step 7',
+                'step 7': 'Procedure Step 7',
+                'procedure_step_7': 'Procedure Step 7',
+                'procedure step 8': 'Procedure Step 8',
+                'step 8': 'Procedure Step 8',
+                'procedure_step_8': 'Procedure Step 8',
+                'procedure step 9': 'Procedure Step 9',
+                'step 9': 'Procedure Step 9',
+                'procedure_step_9': 'Procedure Step 9',
+                'procedure step 10': 'Procedure Step 10',
+                'step 10': 'Procedure Step 10',
+                'procedure_step_10': 'Procedure Step 10',
+                
                 # Approval
                 'issued by': 'Issued By',
                 'issued_by': 'Issued By',
@@ -693,260 +807,326 @@ class ExactPackagingTemplateManager:
                 'approved by': 'Approved By',
                 'approved_by': 'Approved By',
                 
-                # Additional
+                # Additional fields
                 'problem if any': 'Problem If Any',
                 'problem_if_any': 'Problem If Any',
                 'problems': 'Problem If Any',
-                'caution': 'Caution',
-                'warning': 'Caution'
+                'caution': 'Caution'
             }
             
-            # Add procedure steps mapping
-            for i in range(1, 11):
-                column_mappings[f'procedure step {i}'] = f'Procedure Step {i}'
-                column_mappings[f'procedure_step_{i}'] = f'Procedure Step {i}'
-                column_mappings[f'step {i}'] = f'Procedure Step {i}'
-                column_mappings[f'step_{i}'] = f'Procedure Step {i}'
-            
-            # Extract data using mappings
-            for col in df.columns:
-                col_clean = col.strip().lower()
-                mapped_field = column_mappings.get(col_clean, col.strip())
-                
-                # Extract first non-null value from the column
-                if not df.empty and col in df.columns:
-                    for idx in range(len(df)):
-                        value = df[col].iloc[idx]
-                        if pd.notna(value) and str(value).strip():
-                            data_dict[mapped_field] = str(value).strip()
-                            break
+            # Extract data from first row (assuming data is in first row)
+            if not df.empty:
+                for col in df.columns:
+                    col_lower = col.lower().strip()
+                    # Direct match
+                    if col_lower in column_mappings:
+                        mapped_field = column_mappings[col_lower]
+                        data_dict[mapped_field] = str(df[col].iloc[0]) if pd.notna(df[col].iloc[0]) else ''
+                    # Partial match for unmapped columns
+                    else:
+                        # Try to find partial matches
+                        for key, value in column_mappings.items():
+                            if key in col_lower or col_lower in key:
+                                data_dict[value] = str(df[col].iloc[0]) if pd.notna(df[col].iloc[0]) else ''
+                                break
             
             return data_dict
             
         except Exception as e:
-            st.error(f"Error reading file: {str(e)}")
+            st.error(f"Error extracting data from file: {str(e)}")
             return {}
     
-    def populate_template_with_data(self, wb, data_dict):
-        """Populate the Excel template with extracted data"""
+    def populate_template_with_data(self, wb, data_dict, images_data=None):
+        """Populate the Excel template with extracted data and images"""
         ws = wb.active
         
-        # Define cell mappings for data population
-        cell_mappings = {
-            # Header Information
-            'Date': 'G2',
+        try:
+            # Populate header information
+            if 'Revision No.' in data_dict:
+                ws['B2'] = data_dict['Revision No.']
+            if 'Date' in data_dict:
+                ws['G2'] = data_dict['Date']
             
-            # Vendor Information
-            'Vendor Code': 'B5',
-            'Vendor Name': 'B6',
-            'Vendor Location': 'B7',
+            # Populate vendor information
+            if 'Vendor Code' in data_dict:
+                ws['B5'] = data_dict['Vendor Code']
+            if 'Vendor Name' in data_dict:
+                ws['B6'] = data_dict['Vendor Name']
+            if 'Vendor Location' in data_dict:
+                ws['B7'] = data_dict['Vendor Location']
             
-            # Part Information
-            'Part No.': 'G5',
-            'Part Description': 'G6',
-            'Part Unit Weight': 'G7',
-            'Part L': 'G8',
-            'Part W': 'I8',
-            'Part H': 'K8',
+            # Populate part information
+            if 'Part No.' in data_dict:
+                ws['G5'] = data_dict['Part No.']
+            if 'Part Description' in data_dict:
+                ws['G6'] = data_dict['Part Description']
+            if 'Part Unit Weight' in data_dict and 'Part Weight Unit' in data_dict:
+                ws['G7'] = f"{data_dict['Part Unit Weight']} {data_dict['Part Weight Unit']}"
+            elif 'Part Unit Weight' in data_dict:
+                ws['G7'] = data_dict['Part Unit Weight']
             
-            # Primary Packaging
-            'Primary Packaging Type': 'A11',
-            'Primary L-mm': 'B11',
-            'Primary W-mm': 'C11',
-            'Primary H-mm': 'D11',
-            'Primary Qty/Pack': 'E11',
-            'Primary Empty Weight': 'F11',
-            'Primary Pack Weight': 'G11',
+            # Part dimensions
+            if 'Part L' in data_dict:
+                ws['G8'] = data_dict['Part L']
+            if 'Part W' in data_dict:
+                ws['I8'] = data_dict['Part W']
+            if 'Part H' in data_dict:
+                ws['K8'] = data_dict['Part H']
             
-            # Secondary Packaging
-            'Secondary Packaging Type': 'A16',
-            'Secondary L-mm': 'B16',
-            'Secondary W-mm': 'C16',
-            'Secondary H-mm': 'D16',
-            'Secondary Qty/Pack': 'E16',
-            'Secondary Empty Weight': 'F16',
-            'Secondary Pack Weight': 'G16',
+            # Primary packaging information
+            if 'Primary Packaging Type' in data_dict:
+                ws['A11'] = data_dict['Primary Packaging Type']
+            if 'Primary L-mm' in data_dict:
+                ws['B11'] = data_dict['Primary L-mm']
+            if 'Primary W-mm' in data_dict:
+                ws['C11'] = data_dict['Primary W-mm']
+            if 'Primary H-mm' in data_dict:
+                ws['D11'] = data_dict['Primary H-mm']
+            if 'Primary Qty/Pack' in data_dict:
+                ws['E11'] = data_dict['Primary Qty/Pack']
+            if 'Primary Empty Weight' in data_dict:
+                ws['F11'] = data_dict['Primary Empty Weight']
+            if 'Primary Pack Weight' in data_dict:
+                ws['G11'] = data_dict['Primary Pack Weight']
             
-            # Approval
-            'Issued By': 'A39',
-            'Reviewed By': 'D39',
-            'Approved By': 'H39',
+            # Secondary packaging information
+            if 'Secondary Packaging Type' in data_dict:
+                ws['A16'] = data_dict['Secondary Packaging Type']
+            if 'Secondary L-mm' in data_dict:
+                ws['B16'] = data_dict['Secondary L-mm']
+            if 'Secondary W-mm' in data_dict:
+                ws['C16'] = data_dict['Secondary W-mm']
+            if 'Secondary H-mm' in data_dict:
+                ws['D16'] = data_dict['Secondary H-mm']
+            if 'Secondary Qty/Pack' in data_dict:
+                ws['E16'] = data_dict['Secondary Qty/Pack']
+            if 'Secondary Empty Weight' in data_dict:
+                ws['F16'] = data_dict['Secondary Empty Weight']
+            if 'Secondary Pack Weight' in data_dict:
+                ws['G16'] = data_dict['Secondary Pack Weight']
+            
+            # Packaging procedures (steps 1-10)
+            for i in range(1, 11):
+                step_key = f'Procedure Step {i}'
+                if step_key in data_dict and data_dict[step_key]:
+                    row = 19 + i
+                    ws[f'B{row}'] = data_dict[step_key]
             
             # Additional fields
-            'Problem If Any': 'L12',
-            'Caution': 'L13'
-        }
-        
-        # Populate procedure steps
-        for i in range(1, 11):
-            cell_mappings[f'Procedure Step {i}'] = f'B{19+i}'
-        
-        # Apply data to cells
-        for field, cell_ref in cell_mappings.items():
-            if field in data_dict and data_dict[field]:
-                try:
-                    ws[cell_ref] = data_dict[field]
-                except Exception as e:
-                    st.warning(f"Could not populate {field}: {str(e)}")
-        
-        return wb
-    
-    def create_filled_template(self, uploaded_file=None):
-        """Create template and optionally fill with uploaded data"""
-        # Create the base template
-        wb = self.create_exact_template_excel()
-        
-        # If file is uploaded, extract data and populate template
-        if uploaded_file is not None:
-            data_dict = self.extract_data_from_uploaded_file(uploaded_file)
-            if data_dict:
-                wb = self.populate_template_with_data(wb, data_dict)
-                st.success(f"Template populated with data from {uploaded_file.name}")
-            else:
-                st.warning("No valid data found in uploaded file")
-        
-        return wb
-    
-    def save_workbook_to_bytes(self, wb):
-        """Save workbook to bytes for download"""
-        output = io.BytesIO()
-        wb.save(output)
-        output.seek(0)
-        return output.getvalue()
-
-# Streamlit App
-def main():
-    st.set_page_config(page_title="Packaging Template Generator", layout="wide")
-    
-    st.title("📦 Exact Packaging Instruction Template Generator")
-    st.markdown("---")
-    
-    # Initialize template manager
-    template_manager = ExactPackagingTemplateManager()
-    
-    # Sidebar for options
-    st.sidebar.header("Options")
-    
-    # File upload option
-    st.sidebar.subheader("Upload Data File (Optional)")
-    uploaded_file = st.sidebar.file_uploader(
-        "Choose CSV or Excel file to auto-populate template",
-        type=['csv', 'xlsx', 'xls'],
-        help="Upload a file with packaging data to automatically fill the template"
-    )
-    
-    # Display file info if uploaded
-    if uploaded_file:
-        st.sidebar.success(f"✅ File uploaded: {uploaded_file.name}")
-        
-        # Show preview of uploaded data
-        try:
-            if uploaded_file.name.endswith('.csv'):
-                preview_df = pd.read_csv(uploaded_file)
-            else:
-                preview_df = pd.read_excel(uploaded_file)
+            if 'Problem If Any' in data_dict:
+                ws['L10'] = f"PROBLEM IF ANY: {data_dict['Problem If Any']}"
+            if 'Caution' in data_dict:
+                ws['L11'] = f"CAUTION: {data_dict['Caution']}"
             
-            st.sidebar.subheader("Data Preview")
-            st.sidebar.dataframe(preview_df.head(3))
+            # Approval information (can be placed in signature areas if needed)
+            # Note: The template has signature boxes, so we might want to add text above them
+            
+            # Add images if provided
+            if images_data:
+                # Add Primary Packaging image
+                if images_data['Primary Packaging']:
+                    self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A32', 'C37')
+                
+                # Add Secondary Packaging image  
+                if images_data['Secondary Packaging']:
+                    self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'E32', 'F37')
+                
+                # Add Label image
+                if images_data['Label']:
+                    self.add_image_to_cell_range(ws, images_data['Label'], 'H32', 'K37')
+                
+                # Add Current Packaging image (right side)
+                if images_data['Current Packaging']:
+                    self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L1', 'L9')
             
         except Exception as e:
-            st.sidebar.error(f"Error previewing file: {str(e)}")
-    
-    # Main content
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.header("Generate Packaging Template")
-        st.write("""
-        This tool generates an exact replica of the packaging instruction template 
-        with proper formatting, borders, and layout matching the original design.
-        """)
+            st.warning(f"Error populating template: {str(e)}")
         
-        if uploaded_file:
-            st.info("📋 Template will be auto-populated with data from your uploaded file")
-        else:
-            st.info("📋 Generate blank template (you can upload a data file to auto-populate)")
+        return wb
     
-    with col2:
-        st.header("Template Features")
-        st.markdown("""
-        ✅ **Exact Layout Match**
-        - Proper cell merging
-        - Accurate borders
-        - Correct colors & fonts
+    def save_template_to_buffer(self, wb):
+        """Save workbook to BytesIO buffer for download"""
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        return buffer
+# Streamlit App
+def main():
+    st.set_page_config(
+        page_title="Packaging Instruction Template Manager",
+        page_icon="📦",
+        layout="wide"
+    )
+    
+    st.title("📦 Packaging Instruction Template Manager")
+    st.markdown("Create and populate packaging instruction templates with your data")
+    
+    # Initialize the manager
+    manager = ExactPackagingTemplateManager()
+    
+    # Sidebar for navigation
+    st.sidebar.title("Options")
+    mode = st.sidebar.radio(
+        "Choose Mode:",
+        ["Create Empty Template", "Populate from File", "Extract & Populate"]
+    )
+    
+    if mode == "Create Empty Template":
+        st.header("Create Empty Template")
+        st.write("Generate a blank packaging instruction template")
         
-        ✅ **Auto-Population**
-        - CSV/Excel data import
-        - Smart column mapping
-        - Error handling
-        
-        ✅ **Professional Format**
-        - Print-ready layout
-        - Standard Excel format
-        - Easy to edit
-        """)
-    
-    # Generate button
-    st.markdown("---")
-    
-    if st.button("🚀 Generate Packaging Template", type="primary", use_container_width=True):
-        with st.spinner("Generating your packaging template..."):
-            try:
-                # Create the template
-                wb = template_manager.create_filled_template(uploaded_file)
+        if st.button("Generate Empty Template", type="primary"):
+            with st.spinner("Creating template..."):
+                wb = manager.create_exact_template_excel()
+                buffer = manager.save_template_to_buffer(wb)
                 
-                # Convert to bytes for download
-                excel_bytes = template_manager.save_workbook_to_bytes(wb)
-                
-                # Success message
-                st.success("✅ Template generated successfully!")
-                
-                # Download button
-                filename = f"Packaging_Instruction_Template_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-                
+                st.success("Template created successfully!")
                 st.download_button(
-                    label="📥 Download Excel Template",
-                    data=excel_bytes,
-                    file_name=filename,
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
+                    label="📥 Download Empty Template",
+                    data=buffer.getvalue(),
+                    file_name="packaging_instruction_template.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+    
+    elif mode == "Populate from File":
+        st.header("Populate Template from Data File")
+        st.write("Upload a CSV or Excel file with your data to populate the template")
+        
+        uploaded_file = st.file_uploader(
+            "Upload your data file",
+            type=['csv', 'xlsx', 'xls'],
+            help="Upload a CSV or Excel file containing your packaging data"
+        )
+        
+        if uploaded_file is not None:
+            st.success(f"File uploaded: {uploaded_file.name}")
+            
+            # Show data preview
+            try:
+                if uploaded_file.name.endswith('.csv'):
+                    df = pd.read_csv(uploaded_file)
+                else:
+                    df = pd.read_excel(uploaded_file, engine='openpyxl')
                 
-                # Additional info
-                st.info(f"💾 File saved as: {filename}")
+                st.subheader("Data Preview")
+                st.dataframe(df.head())
+                
+                # Extract data
+                data_dict = manager.extract_data_from_uploaded_file(uploaded_file)
+                
+                if data_dict:
+                    st.subheader("Extracted Data")
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write("**Vendor Information:**")
+                        st.write(f"- Code: {data_dict.get('Vendor Code', 'N/A')}")
+                        st.write(f"- Name: {data_dict.get('Vendor Name', 'N/A')}")
+                        st.write(f"- Location: {data_dict.get('Vendor Location', 'N/A')}")
+                        
+                        st.write("**Part Information:**")
+                        st.write(f"- Part No.: {data_dict.get('Part No.', 'N/A')}")
+                        st.write(f"- Description: {data_dict.get('Part Description', 'N/A')}")
+                        st.write(f"- Weight: {data_dict.get('Part Unit Weight', 'N/A')}")
+                    
+                    with col2:
+                        st.write("**Primary Packaging:**")
+                        st.write(f"- Type: {data_dict.get('Primary Packaging Type', 'N/A')}")
+                        st.write(f"- Dimensions: {data_dict.get('Primary L-mm', 'N/A')} x {data_dict.get('Primary W-mm', 'N/A')} x {data_dict.get('Primary H-mm', 'N/A')}")
+                        
+                        st.write("**Secondary Packaging:**")
+                        st.write(f"- Type: {data_dict.get('Secondary Packaging Type', 'N/A')}")
+                        st.write(f"- Dimensions: {data_dict.get('Secondary L-mm', 'N/A')} x {data_dict.get('Secondary W-mm', 'N/A')} x {data_dict.get('Secondary H-mm', 'N/A')}")
+                    
+                    if st.button("Generate Populated Template", type="primary"):
+                        with st.spinner("Creating populated template..."):
+                            wb = manager.create_exact_template_excel()
+                            wb = manager.populate_template_with_data(wb, data_dict)
+                            buffer = manager.save_template_to_buffer(wb)
+                            
+                            st.success("Populated template created successfully!")
+                            st.download_button(
+                                label="📥 Download Populated Template",
+                                data=buffer.getvalue(),
+                                file_name=f"packaging_instruction_{data_dict.get('Part No.', 'populated')}.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            )
                 
             except Exception as e:
-                st.error(f"❌ Error generating template: {str(e)}")
-                st.error("Please check your data file format and try again.")
-
-# Instructions section
-    st.markdown("---")
-    st.header("📖 How to Use")
+                st.error(f"Error processing file: {str(e)}")
     
-    with st.expander("Step-by-Step Instructions"):
-        st.markdown("""
-        ### Option 1: Generate Blank Template
-        1. Click "Generate Packaging Template" button
-        2. Download the generated Excel file
-        3. Fill in your data manually
+    elif mode == "Extract & Populate":
+        st.header("Extract Data & Images from Excel Template")
+        st.write("Upload an existing Excel template to extract data and images, then create a new populated template")
         
-        ### Option 2: Auto-Populate with Data
-        1. Prepare your data in CSV or Excel format
-        2. Upload your file using the sidebar
-        3. Click "Generate Packaging Template"
-        4. Download the pre-filled template
+        uploaded_file = st.file_uploader(
+            "Upload existing Excel template",
+            type=['xlsx'],
+            help="Upload an Excel file with existing packaging instruction data"
+        )
         
-        ### Data File Format
-        Your CSV/Excel file should have columns like:
-        - `Vendor Code`, `Vendor Name`, `Vendor Location`
-        - `Part No.`, `Part Description`, `Part Unit Weight`
-        - `Primary Packaging Type`, `Primary L-mm`, etc.
-        - `Procedure Step 1`, `Procedure Step 2`, etc.
-        
-        ### Supported File Types
-        - CSV (.csv)
-        - Excel (.xlsx, .xls)
-        """)
+        if uploaded_file is not None:
+            st.success(f"File uploaded: {uploaded_file.name}")
+            
+            with st.spinner("Extracting data and images..."):
+                # Extract data
+                data_dict = manager.extract_data_from_uploaded_file(uploaded_file)
+                
+                # Extract images
+                images_data = manager.extract_images_from_excel(uploaded_file)
+                
+                # Show extracted data
+                if data_dict:
+                    st.subheader("Extracted Data Summary")
+                    non_empty_data = {k: v for k, v in data_dict.items() if v}
+                    st.json(non_empty_data)
+                
+                # Show extracted images info
+                st.subheader("Extracted Images")
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    if images_data['Primary Packaging']:
+                        st.success("✅ Primary Packaging Image")
+                    else:
+                        st.info("❌ No Primary Packaging Image")
+                
+                with col2:
+                    if images_data['Secondary Packaging']:
+                        st.success("✅ Secondary Packaging Image")
+                    else:
+                        st.info("❌ No Secondary Packaging Image")
+                
+                with col3:
+                    if images_data['Label']:
+                        st.success("✅ Label Image")
+                    else:
+                        st.info("❌ No Label Image")
+                
+                with col4:
+                    if images_data['Current Packaging']:
+                        st.success("✅ Current Packaging Image")
+                    else:
+                        st.info("❌ No Current Packaging Image")
+                
+                if st.button("Generate New Template with Extracted Data", type="primary"):
+                    with st.spinner("Creating new template with extracted data..."):
+                        wb = manager.create_exact_template_excel()
+                        wb = manager.populate_template_with_data(wb, data_dict, images_data)
+                        buffer = manager.save_template_to_buffer(wb)
+                        
+                        st.success("New template created with extracted data and images!")
+                        st.download_button(
+                            label="📥 Download New Template",
+                            data=buffer.getvalue(),
+                            file_name=f"extracted_packaging_instruction_{data_dict.get('Part No.', 'template')}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("*Packaging Instruction Template Manager v1.0*")
+
 
 if __name__ == "__main__":
     main()
