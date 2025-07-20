@@ -1,17 +1,13 @@
+import streamlit as st
 import pandas as pd
 import openpyxl
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill, Font, Border, Side, Alignment
 from openpyxl.drawing.image import Image
-from openpyxl.cell.cell import MergedCell
-import io
-import base64
-from PIL import Image as PILImage
-import zipfile
-import os
+from openpyxl.styles import PatternFill, Font, Border, Side, Alignment
 import tempfile
-import streamlit as st
-from openpyxl.utils import get_column_letter
+import io
+import os
+from PIL import Image as PILImage
 
 class ExactPackagingTemplateManager:
     def __init__(self):
@@ -73,6 +69,74 @@ class ExactPackagingTemplateManager:
             'Problem If Any': '',
             'Caution': ''
         }
+        
+        # Predefined packaging procedures for different types
+        self.packaging_procedures = {
+            "RIM (R-1)": [
+                "Put 16 quantity of part on plastic pallet",
+                "Apply pet strap over it and put Traceability label as per PMSPL standard guideline",
+                "Stretch wrap complete pack",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- 16)",
+                "Load parts on base plastic pallet -- 4 parts per layer & max 4 level",
+                "Apply traceability label on complete pack",
+                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only",
+                "",
+                ""
+            ],
+            "REAR DOME": [
+                "Pick up one part and apply bubble wrapping over it",
+                "Apply tape and put 12 bubble wrapped part into a Polypropylene box",
+                "Put Traceability label as per PMSPL standard guideline",
+                "Prepare additional Polypropylene box in line with procurement schedule (multiple of secondary pack quantity -- 12)",
+                "If procurement schedule is for less no. of parts, then load similar other parts in same Polypropylene box",
+                "Apply pet strap (2 times -- cross way)",
+                "Apply traceability label on complete pack",
+                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts in same polypropylene box)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only",
+                ""
+            ],
+            "FRONT DOME": [
+                "Pick up 1 part and apply bubble wrapping over it",
+                "Apply tape and put 12 bubble wrapped part into a Polypropylene box",
+                "Put Traceability label as per PMSPL standard guideline",
+                "Prepare additional Polypropylene box in line with procurement schedule (multiple of secondary pack quantity -- 12)",
+                "If procurement schedule is for less no. of parts, then load similar other parts in same Polypropylene box",
+                "Apply pet strap (2 times -- cross way)",
+                "Apply traceability label on complete pack",
+                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts in same polypropylene box)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only",
+                ""
+            ],
+            "REAR WINDSHIELD": [
+                "Pick 20 quantity of rear windshield glass",
+                "Pack rear windshield it in metallic pallet with rubber cushioning separators between parts to arrest part movement during handling",
+                "Seal metallic pallet with top rubber cushioning separators",
+                "Prepare additional pallets inline with scheduled requirement",
+                "Apply traceability label on complete pack",
+                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only",
+                "",
+                "",
+                ""
+            ],
+            "FRONT HARNESS": [
+                "Pick up 5 quantity of part and put it in a polybag",
+                "Put 2 such polybags in a polypropylene box",
+                "Seal polypropylene box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional polypropylene boxes in line with procurement schedule (multiple of primary pack quantity -- 5)",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same plastic pallet",
+                "Load polypropylene boxes on base plastic pallet -- 4 boxes per layer & max 2 level",
+                "Apply pet strap (2 times -- cross way)",
+                "Apply traceability label on complete pack",
+                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only"
+            ]
+        }
+    
+    def get_procedure_steps(self, packaging_type):
+        """Get predefined procedure steps for selected packaging type"""
+        return self.packaging_procedures.get(packaging_type, [""] * 10)
     
     def extract_images_from_excel(self, uploaded_file):
         """Extract images from Excel file"""
@@ -82,20 +146,39 @@ class ExactPackagingTemplateManager:
             'Secondary Packaging': None,
             'Label': None
         }
-        
+        tmp_file_path = None
         try:
             # Save uploaded file to temporary location
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
                 tmp_file.write(uploaded_file.getvalue())
                 tmp_file_path = tmp_file.name
-            
             # Load workbook and extract images
             wb = load_workbook(tmp_file_path)
             ws = wb.active
-            
+    
+            # First, let's find the header row and column positions dynamically
+            header_positions = {}
+    
+            # Search for headers in the worksheet (typically in first few rows)
+            for row_idx in range(1, 10):  # Check first 10 rows for headers
+                for col_idx in range(1, ws.max_column + 1):
+                    cell_value = ws.cell(row=row_idx, column=col_idx).value
+                    if cell_value:
+                        cell_value = str(cell_value).strip().lower()
+                        if "current packaging image" in cell_value:
+                            header_positions['Current Packaging'] = col_idx - 1  # Convert to 0-based
+                        elif "primary packaging image" in cell_value:
+                            header_positions['Primary Packaging'] = col_idx - 1
+                        elif "secondary packaging image" in cell_value:
+                            header_positions['Secondary Packaging'] = col_idx - 1
+                        elif "label image" in cell_value:
+                            header_positions['Label'] = col_idx - 1
+            st.info(f"Found header positions: {header_positions}")
+    
             # Debug: Print total number of images found
-            st.info(f"Found {len(ws._images) if hasattr(ws, '_images') and ws._images else 0} images in the worksheet")
-            
+            total_images = len(ws._images) if hasattr(ws, '_images') and ws._images else 0
+            st.info(f"Found {total_images} images in the worksheet")
+    
             # Extract all images from the worksheet
             if hasattr(ws, '_images') and ws._images:
                 for idx, img in enumerate(ws._images):
@@ -103,116 +186,87 @@ class ExactPackagingTemplateManager:
                         # Convert image to PIL Image
                         image_stream = io.BytesIO(img._data())
                         pil_image = PILImage.open(image_stream)
-                        
+                
                         # Get anchor information to determine image location
                         anchor = img.anchor
-                        
-                        # More flexible anchor checking
+                        col_idx = None
+                        row_idx = None
+                
+                        # Get column and row from anchor
                         if hasattr(anchor, '_from') and anchor._from:
                             col_idx = anchor._from.col
                             row_idx = anchor._from.row
-                            
-                            # Debug info
-                            st.write(f"Image {idx+1}: Located at column {col_idx}, row {row_idx}")
-                            
-                            # Determine image type based on location (0-indexed)
-                            # Primary packaging area (A32:C37 = cols 0-2, rows 31-36)
-                            if 0 <= col_idx <= 2 and 30 <= row_idx <= 36:
-                                images_data['Primary Packaging'] = pil_image
-                                st.success(f"✅ Primary Packaging image found at col {col_idx}, row {row_idx}")
-                            
-                            # Secondary packaging area (E32:F37 = cols 4-5, rows 31-36)  
-                            elif 4 <= col_idx <= 5 and 30 <= row_idx <= 36:
-                                images_data['Secondary Packaging'] = pil_image
-                                st.success(f"✅ Secondary Packaging image found at col {col_idx}, row {row_idx}")
-                            
-                            # Label area (H32:K37 = cols 7-10, rows 31-36)
-                            elif 7 <= col_idx <= 10 and 30 <= row_idx <= 36:
-                                images_data['Label'] = pil_image
-                                st.success(f"✅ Label image found at col {col_idx}, row {row_idx}")
-                            
-                            # Current packaging column (L = col 11, any row)
-                            elif col_idx == 11:
-                                images_data['Current Packaging'] = pil_image
-                                st.success(f"✅ Current Packaging image found at col {col_idx}, row {row_idx}")
-                            
-                            # If image doesn't match expected locations, try alternative approach
-                            else:
-                                # Check if image overlaps with any of our target areas
-                                # This handles cases where images might be positioned slightly differently
-                                
-                                # For images in columns A-C (Primary)
-                                if 0 <= col_idx <= 2:
-                                    images_data['Primary Packaging'] = pil_image
-                                    st.success(f"✅ Primary Packaging image found (fallback) at col {col_idx}, row {row_idx}")
-                                
-                                # For images in columns D-F (Secondary) 
-                                elif 3 <= col_idx <= 5:
-                                    images_data['Secondary Packaging'] = pil_image
-                                    st.success(f"✅ Secondary Packaging image found (fallback) at col {col_idx}, row {row_idx}")
-                                
-                                # For images in columns G-K (Label)
-                                elif 6 <= col_idx <= 10:
-                                    images_data['Label'] = pil_image
-                                    st.success(f"✅ Label image found (fallback) at col {col_idx}, row {row_idx}")
-                                
-                                # For images in column L (Current)
-                                elif col_idx >= 11:
-                                    images_data['Current Packaging'] = pil_image
-                                    st.success(f"✅ Current Packaging image found (fallback) at col {col_idx}, row {row_idx}")
-                                
-                                else:
-                                    st.warning(f"⚠️ Image {idx+1} found at unexpected location: col {col_idx}, row {row_idx}")
-                        
-                        # Alternative anchor checking for different openpyxl versions
                         elif hasattr(anchor, 'col') and hasattr(anchor, 'row'):
                             col_idx = anchor.col
                             row_idx = anchor.row
-                            
-                            st.write(f"Image {idx+1} (alt method): Located at column {col_idx}, row {row_idx}")
-                            
-                            # Apply same logic as above
-                            if 0 <= col_idx <= 2 and 30 <= row_idx <= 36:
-                                images_data['Primary Packaging'] = pil_image
-                            elif 4 <= col_idx <= 5 and 30 <= row_idx <= 36:
-                                images_data['Secondary Packaging'] = pil_image
-                            elif 7 <= col_idx <= 10 and 30 <= row_idx <= 36:
-                                images_data['Label'] = pil_image
-                            elif col_idx == 11:
-                                images_data['Current Packaging'] = pil_image
-                        
+                    
+                        if col_idx is not None:
+                            st.write(f"Image {idx+1}: Located at column {col_idx}, row {row_idx}")
+                            # Map image to correct category based on header positions
+                            assigned = False
+                    
+                            for category, expected_col in header_positions.items():
+                                # Allow some flexibility in column matching (±1 column)
+                                if abs(col_idx - expected_col) <= 1:
+                                    images_data[category] = pil_image
+                                    st.success(f"✅ {category} image found at col {col_idx}, row {row_idx}")
+                                    assigned = True
+                                    break
+                            if not assigned:
+                                st.warning(f"⚠️ Image {idx+1} found at unexpected location: col {col_idx}, row {row_idx}")
+                                # Fallback: Try to map based on approximate column ranges
+                                if 64 <= col_idx <= 65:  # BM-BN range
+                                    if not images_data['Current Packaging']:
+                                        images_data['Current Packaging'] = pil_image
+                                        st.info("Assigned to Current Packaging (fallback)")
+                                    elif not images_data['Primary Packaging']:
+                                        images_data['Primary Packaging'] = pil_image
+                                        st.info("Assigned to Primary Packaging (fallback)")
+                                elif 66 <= col_idx <= 67:  # BO-BP range
+                                    if not images_data['Secondary Packaging']:
+                                        images_data['Secondary Packaging'] = pil_image
+                                        st.info("Assigned to Secondary Packaging (fallback)")
+                                    elif not images_data['Label']:
+                                        images_data['Label'] = pil_image
+                                        st.info("Assigned to Label (fallback)")
+                                else:
+                                    # Final fallback: assign to first empty slot
+                                    for category in ['Current Packaging', 'Primary Packaging', 'Secondary Packaging', 'Label']:
+                                        if not images_data[category]:
+                                            images_data[category] = pil_image
+                                            st.info(f"Assigned to {category} (final fallback)")
+                                            break
                         else:
                             st.warning(f"Could not determine location for image {idx+1}")
-                            # As fallback, assign to first empty slot
-                            if not images_data['Primary Packaging']:
-                                images_data['Primary Packaging'] = pil_image
-                                st.info("Assigned to Primary Packaging (fallback)")
-                            elif not images_data['Secondary Packaging']:
-                                images_data['Secondary Packaging'] = pil_image
-                                st.info("Assigned to Secondary Packaging (fallback)")
-                            elif not images_data['Label']:
-                                images_data['Label'] = pil_image
-                                st.info("Assigned to Label (fallback)")
-                            elif not images_data['Current Packaging']:
-                                images_data['Current Packaging'] = pil_image
-                                st.info("Assigned to Current Packaging (fallback)")
-                    
+                            # Final fallback: assign to first empty slot
+                            for category in ['Current Packaging', 'Primary Packaging', 'Secondary Packaging', 'Label']:
+                                if not images_data[category]:
+                                    images_data[category] = pil_image
+                                    st.info(f"Assigned to {category} (final fallback)")
+                                    break
                     except Exception as img_error:
                         st.error(f"Error processing image {idx+1}: {str(img_error)}")
                         continue
-            
             else:
                 st.warning("No images found in the worksheet. Make sure images are properly embedded in the Excel file.")
-            
-            # Clean up temporary file
-            os.unlink(tmp_file_path)
-            
-            return images_data
-            
+                # Show final results
+                st.info("Final image assignments:")
+                for category, image in images_data.items():
+                    if image:
+                        st.success(f"✅ {category}: Image assigned")
+                    else:
+                        st.warning(f"❌ {category}: No image found")
+                return images_data
         except Exception as e:
             st.error(f"Could not extract images: {str(e)}")
             return images_data
-
+        finally:
+            # Clean up temporary file
+            if tmp_file_path and os.path.exists(tmp_file_path):
+                try:
+                    os.unlink(tmp_file_path)
+                except Exception as cleanup_error:
+                    st.warning(f"Could not clean up temporary file: {str(cleanup_error)}")
 
     def apply_border_to_range(self, ws, start_cell, end_cell):
         """Apply borders to a range of cells"""
@@ -273,7 +327,7 @@ class ExactPackagingTemplateManager:
         white_font = Font(color="FFFFFF", bold=True, size=12)
         black_font = Font(color="000000", bold=True, size=14)
         regular_font = Font(color="000000", size=12)
-        bold_font = Font(color="000000", bold=True, size=12)  # Added bold font for headers
+        bold_font = Font(color="000000", bold=True, size=12)
         border = Border(left=Side(style='thin'), right=Side(style='thin'), 
                        top=Side(style='thin'), bottom=Side(style='thin'))
         center_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
@@ -318,7 +372,7 @@ class ExactPackagingTemplateManager:
         ws['A2'] = "Revision No."
         ws['A2'].border = border
         ws['A2'].alignment = left_alignment
-        ws['A2'].font = bold_font  # Made bold
+        ws['A2'].font = bold_font
 
         ws.merge_cells('B2:E2')
         ws['B2'] = "Revision 1"
@@ -329,7 +383,7 @@ class ExactPackagingTemplateManager:
         ws['F2'] = "Date"
         ws['F2'].border = border
         ws['F2'].alignment = left_alignment
-        ws['F2'].font = bold_font  # Made bold
+        ws['F2'].font = bold_font
 
         # Merge cells for date value
         ws.merge_cells('G2:K2')
@@ -368,7 +422,7 @@ class ExactPackagingTemplateManager:
 
         # Vendor Code Row
         ws['A5'] = "Code"
-        ws['A5'].font = bold_font  # Made bold
+        ws['A5'].font = bold_font
         ws['A5'].alignment = left_alignment
         ws['A5'].border = border
 
@@ -383,7 +437,7 @@ class ExactPackagingTemplateManager:
         ws['F5'] = "Part No."
         ws['F5'].border = border
         ws['F5'].alignment = left_alignment
-        ws['F5'].font = bold_font  # Made bold
+        ws['F5'].font = bold_font
 
         ws.merge_cells('G5:K5')
         ws['G5'] = ""
@@ -394,7 +448,7 @@ class ExactPackagingTemplateManager:
 
         # Vendor Name Row
         ws['A6'] = "Name"
-        ws['A6'].font = bold_font  # Made bold
+        ws['A6'].font = bold_font
         ws['A6'].alignment = left_alignment
         ws['A6'].border = border
 
@@ -408,7 +462,7 @@ class ExactPackagingTemplateManager:
         ws['F6'] = "Description"
         ws['F6'].border = border
         ws['F6'].alignment = left_alignment
-        ws['F6'].font = bold_font  # Made bold
+        ws['F6'].font = bold_font
 
         ws.merge_cells('G6:K6')
         ws['G6'] = ""
@@ -419,7 +473,7 @@ class ExactPackagingTemplateManager:
 
         # Vendor Location Row
         ws['A7'] = "Location"
-        ws['A7'].font = bold_font  # Made bold
+        ws['A7'].font = bold_font
         ws['A7'].alignment = left_alignment
         ws['A7'].border = border
 
@@ -433,7 +487,7 @@ class ExactPackagingTemplateManager:
         ws['F7'] = "Unit Weight"
         ws['F7'].border = border
         ws['F7'].alignment = left_alignment
-        ws['F7'].font = bold_font  # Made bold
+        ws['F7'].font = bold_font
 
         ws.merge_cells('G7:K7')
         ws['G7'] = ""
@@ -446,7 +500,7 @@ class ExactPackagingTemplateManager:
         ws['F8'] = "L"
         ws['F8'].border = border
         ws['F8'].alignment = left_alignment
-        ws['F8'].font = bold_font  # Made bold
+        ws['F8'].font = bold_font
 
         ws['G8'] = ""
         ws['G8'].border = border
@@ -454,7 +508,7 @@ class ExactPackagingTemplateManager:
         ws['H8'] = "W"
         ws['H8'].border = border
         ws['H8'].alignment = center_alignment
-        ws['H8'].font = bold_font  # Made bold
+        ws['H8'].font = bold_font
 
         ws['I8'] = ""
         ws['I8'].border = border
@@ -462,7 +516,7 @@ class ExactPackagingTemplateManager:
         ws['J8'] = "H"
         ws['J8'].border = border
         ws['J8'].alignment = center_alignment
-        ws['J8'].font = bold_font  # Made bold
+        ws['J8'].font = bold_font
 
         ws['K8'] = ""
         ws['K8'].border = border
@@ -493,7 +547,7 @@ class ExactPackagingTemplateManager:
             ws[f'{col}10'] = header
             ws[f'{col}10'].border = border
             ws[f'{col}10'].alignment = center_alignment
-            ws[f'{col}10'].font = bold_font  # Made bold
+            ws[f'{col}10'].font = bold_font
 
         # Empty cells for remaining columns in row 10
         for col in ['H', 'I', 'J', 'K', 'L']:
@@ -525,7 +579,7 @@ class ExactPackagingTemplateManager:
 
         ws['L10'] = "PROBLEM IF ANY:"
         ws['L10'].border = border
-        ws['L10'].font = bold_font  # Made bold
+        ws['L10'].font = bold_font
         ws['L10'].alignment = left_alignment
 
         # Secondary packaging headers
@@ -534,7 +588,7 @@ class ExactPackagingTemplateManager:
             ws[f'{col}15'] = header
             ws[f'{col}15'].border = border
             ws[f'{col}15'].alignment = center_alignment
-            ws[f'{col}15'].font = bold_font  # Made bold
+            ws[f'{col}15'].font = bold_font
 
         # Empty cells for remaining columns in row 15
         for col in ['H', 'I', 'J', 'K']:
@@ -576,7 +630,7 @@ class ExactPackagingTemplateManager:
             ws[f'A{row}'] = str(i)
             ws[f'A{row}'].border = border
             ws[f'A{row}'].alignment = center_alignment
-            ws[f'A{row}'].font = bold_font  # Made bold
+            ws[f'A{row}'].font = bold_font
 
             # MERGE CELLS B to J for each procedure step
             ws.merge_cells(f'B{row}:J{row}')
@@ -605,19 +659,19 @@ class ExactPackagingTemplateManager:
         ws.merge_cells('A31:C31')
         ws['A31'] = "Primary Packaging"
         ws['A31'].alignment = center_alignment
-        ws['A31'].font = bold_font  # Made bold
+        ws['A31'].font = bold_font
         self.apply_border_to_range(ws, 'A31', 'C31')
 
         ws.merge_cells('D31:G31')
         ws['D31'] = "Secondary Packaging"
         ws['D31'].alignment = center_alignment
-        ws['D31'].font = bold_font  # Made bold
+        ws['D31'].font = bold_font
         self.apply_border_to_range(ws, 'D31', 'G31')
 
         ws.merge_cells('H31:J31')
         ws['H31'] = "Label"
         ws['H31'].alignment = center_alignment
-        ws['H31'].font = bold_font  # Made bold
+        ws['H31'].font = bold_font
         self.apply_border_to_range(ws, 'H31', 'J31')
 
         ws['K31'] = ""
@@ -629,662 +683,440 @@ class ExactPackagingTemplateManager:
         ws.merge_cells('A32:C37')
         ws['A32'] = "Primary\nPackaging"
         ws['A32'].alignment = center_alignment
-        ws['A32'].font = regular_font
+        ws['A2'].font = bold_font
         self.apply_border_to_range(ws, 'A32', 'C37')
 
-        # Arrow 1
-        ws['D35'] = "→"
-        ws['D35'].border = border
-        ws['D35'].alignment = center_alignment
-        ws['D35'].font = Font(size=20, bold=True)
+        ws.merge_cells('D32:G37')
+        ws['D32'] = "Secondary\nPackaging"
+        ws['D32'].alignment = center_alignment
+        self.apply_border_to_range(ws, 'D32', 'G37')
 
-        # Secondary Packaging image area
-        ws.merge_cells('E32:F37')
-        ws['E32'] = "SECONDARY\nPACKAGING"
-        ws['E32'].alignment = center_alignment
-        ws['E32'].font = regular_font
-        ws['E32'].fill = light_blue_fill
-        self.apply_border_to_range(ws, 'E32', 'F37')
-
-        # Arrow 2
-        ws['G35'] = "→"
-        ws['G35'].border = border
-        ws['G35'].alignment = center_alignment
-        ws['G35'].font = Font(size=20, bold=True)
-
-        # Label image area
-        ws.merge_cells('H32:K37')
-        ws['H32'] = "LABEL"
+        ws.merge_cells('H32:J37')
+        ws['H32'] = "Label"
         ws['H32'].alignment = center_alignment
-        ws['H32'].font = regular_font
-        self.apply_border_to_range(ws, 'H32', 'K37')
+        self.apply_border_to_range(ws, 'H32', 'J37')
 
-        # Add borders to remaining cells in image section
+        # K and L columns for rows 32-37
         for row in range(32, 38):
-            for col in ['D', 'G', 'L']:
-                if row != 35 or col != 'D':  # Skip D35 and G35 which have arrows
-                    if row != 35 or col != 'G':
-                        ws[f'{col}{row}'] = ""
-                        ws[f'{col}{row}'].border = border
-
-        # Approval Section
-        ws.merge_cells('A38:C38')
-        ws['A38'] = "Issued By"
-        ws['A38'].alignment = center_alignment
-        ws['A38'].font = bold_font  # Made bold
-        self.apply_border_to_range(ws, 'A38', 'C38')
-
-        ws.merge_cells('D38:G38')
-        ws['D38'] = "Reviewed By"
-        ws['D38'].alignment = center_alignment
-        ws['D38'].font = bold_font  # Made bold
-        self.apply_border_to_range(ws, 'D38', 'G38')
-
-        ws.merge_cells('H38:K38')
-        ws['H38'] = "Approved By"
-        ws['H38'].alignment = center_alignment
-        ws['H38'].font = bold_font  # Made bold
-        self.apply_border_to_range(ws, 'H38', 'K38')
-
-        ws['L38'] = ""
-        ws['L38'].border = border
-
-        # Signature boxes (rows 39-42)
-        ws.merge_cells('A39:C42')
-        ws['A39'] = ""
-        self.apply_border_to_range(ws, 'A39', 'C42')
-
-        ws.merge_cells('D39:G42')
-        ws['D39'] = ""
-        self.apply_border_to_range(ws, 'D39', 'G42')
-
-        ws.merge_cells('H39:K42')
-        ws['H39'] = ""
-        self.apply_border_to_range(ws, 'H39', 'K42')
-
-        # Apply borders for L column in signature section
-        for row in range(39, 43):
-            ws[f'L{row}'] = ""
-            ws[f'L{row}'].border = border
-
-        # Second Approval Section
-        ws.merge_cells('A43:C43')
-        ws['A43'] = "Issued By"
-        ws['A43'].alignment = center_alignment
-        ws['A43'].font = bold_font  # Made bold
-        self.apply_border_to_range(ws, 'A43', 'C43')
-
-        ws.merge_cells('D43:G43')
-        ws['D43'] = "Reviewed By"
-        ws['D43'].alignment = center_alignment
-        ws['D43'].font = bold_font  # Made bold
-        self.apply_border_to_range(ws, 'D43', 'G43')
-
-        ws.merge_cells('H43:J43')
-        ws['H43'] = "Approved By"
-        ws['H43'].alignment = center_alignment
-        ws['H43'].font = bold_font  # Made bold
-        self.apply_border_to_range(ws, 'H43', 'J43')
-
-        ws['K43'] = ""
-        ws['K43'].border = border
-        ws['L43'] = ""
-        ws['L43'].border = border
-
-        # Second signature boxes (rows 44-47)
-        ws.merge_cells('A44:C47')
-        ws['A44'] = ""
-        self.apply_border_to_range(ws, 'A44', 'C47')
-
-        ws.merge_cells('D44:G47')
-        ws['D44'] = ""
-        self.apply_border_to_range(ws, 'D44', 'G47')
-
-        ws.merge_cells('H44:J47')
-        ws['H44'] = ""
-        self.apply_border_to_range(ws, 'H44', 'J47')
-
-        # Apply borders for K and L columns in second signature section
-        for row in range(44, 48):
             ws[f'K{row}'] = ""
             ws[f'K{row}'].border = border
             ws[f'L{row}'] = ""
             ws[f'L{row}'].border = border
 
-        # Final rows (48-50) - empty with borders
-        for row in range(48, 51):
-            for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']:
-                ws[f'{col}{row}'] = ""
-                ws[f'{col}{row}'].border = border
+        # Approval section
+        ws.merge_cells('A38:K38')
+        ws['A38'] = "Approval"
+        ws['A38'].fill = blue_fill
+        ws['A38'].font = white_font
+        ws['A38'].alignment = center_alignment
+        self.apply_border_to_range(ws, 'A38', 'K38')
 
-        # Return the workbook
+        ws['L38'] = ""
+        ws['L38'].border = border
+
+        # Approval rows
+        approval_labels = ["Issued By", "Reviewed By", "Approved By"]
+        for i, label in enumerate(approval_labels):
+            row = 39 + i
+            ws[f'A{row}'] = label
+            ws[f'A{row}'].border = border
+            ws[f'A{row}'].alignment = left_alignment
+            ws[f'A{row}'].font = bold_font
+
+            # Merge cells for name and signature
+            ws.merge_cells(f'B{row}:E{row}')
+            ws[f'B{row}'] = "Name & Sign:"
+            ws[f'B{row}'].border = border
+            ws[f'B{row}'].alignment = left_alignment
+            self.apply_border_to_range(ws, f'B{row}', f'E{row}')
+
+            ws[f'F{row}'] = "Date:"
+            ws[f'F{row}'].border = border
+            ws[f'F{row}'].alignment = left_alignment
+            ws[f'F{row}'].font = bold_font
+
+            ws.merge_cells(f'G{row}:K{row}')
+            ws[f'G{row}'] = ""
+            self.apply_border_to_range(ws, f'G{row}', f'K{row}')
+
+            ws[f'L{row}'] = ""
+            ws[f'L{row}'].border = border
+
         return wb
-    
-    def extract_data_from_uploaded_file(self, uploaded_file):
-        """Extract comprehensive data from uploaded CSV/Excel file"""
-        try:
-            if uploaded_file.name.endswith('.csv'):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = pd.read_excel(uploaded_file, engine='openpyxl')
-            
-            # Convert dataframe to dictionary - extract all available data
-            data_dict = {}
-            
-            # Map common variations of column names
-            column_mappings = {
-                # Header Information
-                'revision no': 'Revision No.',
-                'revision_no': 'Revision No.',
-                'revision number': 'Revision No.',
-                'date': 'Date',
-                
-                # Vendor Information
-                'vendor code': 'Vendor Code',
-                'vendor_code': 'Vendor Code',
-                'supplier code': 'Vendor Code',
-                'vendor name': 'Vendor Name',
-                'vendor_name': 'Vendor Name',
-                'supplier name': 'Vendor Name',
-                'vendor location': 'Vendor Location',
-                'vendor_location': 'Vendor Location',
-                'supplier location': 'Vendor Location',
-                
-                # Part Information
-                'part no': 'Part No.',
-                'part_no': 'Part No.',
-                'part number': 'Part No.',
-                'part description': 'Part Description',
-                'part_description': 'Part Description',
-                'description': 'Part Description',
-                'part unit weight': 'Part Unit Weight',
-                'part_unit_weight': 'Part Unit Weight',
-                'unit weight': 'Part Unit Weight',
-                'weight': 'Part Unit Weight',
-                'part weight unit': 'Part Weight Unit',
-                'weight unit': 'Part Weight Unit',
-                'part l': 'Part L',
-                'part_l': 'Part L',
-                'part length': 'Part L',
-                'part w': 'Part W',
-                'part_w': 'Part W',
-                'part width': 'Part W',
-                'part h': 'Part H',
-                'part_h': 'Part H',
-                'part height': 'Part H',
-                
-                # Primary Packaging
-                'primary packaging type': 'Primary Packaging Type',
-                'primary_packaging_type': 'Primary Packaging Type',
-                'primary type': 'Primary Packaging Type',
-                'primary l-mm': 'Primary L-mm',
-                'primary_l_mm': 'Primary L-mm',
-                'primary length': 'Primary L-mm',
-                'primary w-mm': 'Primary W-mm',
-                'primary_w_mm': 'Primary W-mm',
-                'primary width': 'Primary W-mm',
-                'primary h-mm': 'Primary H-mm',
-                'primary_h_mm': 'Primary H-mm',
-                'primary height': 'Primary H-mm',
-                'primary qty/pack': 'Primary Qty/Pack',
-                'primary_qty_pack': 'Primary Qty/Pack',
-                'primary quantity': 'Primary Qty/Pack',
-                'primary empty weight': 'Primary Empty Weight',
-                'primary_empty_weight': 'Primary Empty Weight',
-                'primary pack weight': 'Primary Pack Weight',
-                'primary_pack_weight': 'Primary Pack Weight',
-                
-                # Secondary Packaging
-                'secondary packaging type': 'Secondary Packaging Type',
-                'secondary_packaging_type': 'Secondary Packaging Type',
-                'secondary type': 'Secondary Packaging Type',
-                'secondary l-mm': 'Secondary L-mm',
-                'secondary_l_mm': 'Secondary L-mm',
-                'secondary length': 'Secondary L-mm',
-                'secondary w-mm': 'Secondary W-mm',
-                'secondary_w_mm': 'Secondary W-mm',
-                'secondary width': 'Secondary W-mm',
-                'secondary h-mm': 'Secondary H-mm',
-                'secondary_h_mm': 'Secondary H-mm',
-                'secondary height': 'Secondary H-mm',
-                'secondary qty/pack': 'Secondary Qty/Pack',
-                'secondary_qty_pack': 'Secondary Qty/Pack',
-                'secondary quantity': 'Secondary Qty/Pack',
-                'secondary empty weight': 'Secondary Empty Weight',
-                'secondary_empty_weight': 'Secondary Empty Weight',
-                'secondary pack weight': 'Secondary Pack Weight',
-                'secondary_pack_weight': 'Secondary Pack Weight',
-                
-                # Packaging Procedures
-                'procedure step 1': 'Procedure Step 1',
-                'step 1': 'Procedure Step 1',
-                'procedure_step_1': 'Procedure Step 1',
-                'procedure step 2': 'Procedure Step 2',
-                'step 2': 'Procedure Step 2',
-                'procedure_step_2': 'Procedure Step 2',
-                'procedure step 3': 'Procedure Step 3',
-                'step 3': 'Procedure Step 3',
-                'procedure_step_3': 'Procedure Step 3',
-                'procedure step 4': 'Procedure Step 4',
-                'step 4': 'Procedure Step 4',
-                'procedure_step_4': 'Procedure Step 4',
-                'procedure step 5': 'Procedure Step 5',
-                'step 5': 'Procedure Step 5',
-                'procedure_step_5': 'Procedure Step 5',
-                'procedure step 6': 'Procedure Step 6',
-                'step 6': 'Procedure Step 6',
-                'procedure_step_6': 'Procedure Step 6',
-                'procedure step 7': 'Procedure Step 7',
-                'step 7': 'Procedure Step 7',
-                'procedure_step_7': 'Procedure Step 7',
-                'procedure step 8': 'Procedure Step 8',
-                'step 8': 'Procedure Step 8',
-                'procedure_step_8': 'Procedure Step 8',
-                'procedure step 9': 'Procedure Step 9',
-                'step 9': 'Procedure Step 9',
-                'procedure_step_9': 'Procedure Step 9',
-                'procedure step 10': 'Procedure Step 10',
-                'step 10': 'Procedure Step 10',
-                'procedure_step_10': 'Procedure Step 10',
-                
-                # Approval
-                'issued by': 'Issued By',
-                'issued_by': 'Issued By',
-                'reviewed by': 'Reviewed By',
-                'reviewed_by': 'Reviewed By',
-                'approved by': 'Approved By',
-                'approved_by': 'Approved By',
-                
-                # Additional fields
-                'problem if any': 'Problem If Any',
-                'problem_if_any': 'Problem If Any',
-                'problems': 'Problem If Any',
-                'caution': 'Caution'
-            }
-            
-            # Extract data from first row (assuming data is in first row)
-            if not df.empty:
-                for col in df.columns:
-                    col_lower = col.lower().strip()
-                    # Direct match
-                    if col_lower in column_mappings:
-                        mapped_field = column_mappings[col_lower]
-                        data_dict[mapped_field] = str(df[col].iloc[0]) if pd.notna(df[col].iloc[0]) else ''
-                    # Partial match for unmapped columns
-                    else:
-                        # Try to find partial matches
-                        for key, value in column_mappings.items():
-                            if key in col_lower or col_lower in key:
-                                data_dict[value] = str(df[col].iloc[0]) if pd.notna(df[col].iloc[0]) else ''
-                                break
-            
-            return data_dict
-            
-        except Exception as e:
-            st.error(f"Error extracting data from file: {str(e)}")
-            return {}
-    
-    def populate_template_with_data(self, wb, data_dict, images_data=None):
-        """Populate the Excel template with extracted data and images"""
+
+    def populate_template_with_data(self, wb, form_data, images_data=None):
+        """Populate the template with form data and images"""
         ws = wb.active
         
-        try:
-            # Populate header information
-            if 'Revision No.' in data_dict:
-                ws['B2'] = data_dict['Revision No.']
-            if 'Date' in data_dict:
-                ws['G2'] = data_dict['Date']
+        # Populate form data
+        if form_data.get('Vendor Code'):
+            ws['B5'] = form_data['Vendor Code']
+        if form_data.get('Vendor Name'):
+            ws['B6'] = form_data['Vendor Name']
+        if form_data.get('Vendor Location'):
+            ws['B7'] = form_data['Vendor Location']
             
-            # Populate vendor information
-            if 'Vendor Code' in data_dict:
-                ws['B5'] = data_dict['Vendor Code']
-            if 'Vendor Name' in data_dict:
-                ws['B6'] = data_dict['Vendor Name']
-            if 'Vendor Location' in data_dict:
-                ws['B7'] = data_dict['Vendor Location']
+        # Part information
+        if form_data.get('Part No.'):
+            ws['G5'] = form_data['Part No.']
+        if form_data.get('Part Description'):
+            ws['G6'] = form_data['Part Description']
+        if form_data.get('Part Unit Weight'):
+            weight_unit = form_data.get('Part Weight Unit', '')
+            ws['G7'] = f"{form_data['Part Unit Weight']} {weight_unit}"
             
-            # Populate part information
-            if 'Part No.' in data_dict:
-                ws['G5'] = data_dict['Part No.']
-            if 'Part Description' in data_dict:
-                ws['G6'] = data_dict['Part Description']
-            if 'Part Unit Weight' in data_dict and 'Part Weight Unit' in data_dict:
-                ws['G7'] = f"{data_dict['Part Unit Weight']} {data_dict['Part Weight Unit']}"
-            elif 'Part Unit Weight' in data_dict:
-                ws['G7'] = data_dict['Part Unit Weight']
+        # Part dimensions
+        if form_data.get('Part L'):
+            ws['G8'] = form_data['Part L']
+        if form_data.get('Part W'):
+            ws['I8'] = form_data['Part W']
+        if form_data.get('Part H'):
+            ws['K8'] = form_data['Part H']
             
-            # Part dimensions
-            if 'Part L' in data_dict:
-                ws['G8'] = data_dict['Part L']
-            if 'Part W' in data_dict:
-                ws['I8'] = data_dict['Part W']
-            if 'Part H' in data_dict:
-                ws['K8'] = data_dict['Part H']
+        # Primary packaging
+        if form_data.get('Primary Packaging Type'):
+            ws['A11'] = form_data['Primary Packaging Type']
+        if form_data.get('Primary L-mm'):
+            ws['B11'] = form_data['Primary L-mm']
+        if form_data.get('Primary W-mm'):
+            ws['C11'] = form_data['Primary W-mm']
+        if form_data.get('Primary H-mm'):
+            ws['D11'] = form_data['Primary H-mm']
+        if form_data.get('Primary Qty/Pack'):
+            ws['E11'] = form_data['Primary Qty/Pack']
+        if form_data.get('Primary Empty Weight'):
+            ws['F11'] = form_data['Primary Empty Weight']
+        if form_data.get('Primary Pack Weight'):
+            ws['G11'] = form_data['Primary Pack Weight']
             
-            # Primary packaging information
-            if 'Primary Packaging Type' in data_dict:
-                ws['A11'] = data_dict['Primary Packaging Type']
-            if 'Primary L-mm' in data_dict:
-                ws['B11'] = data_dict['Primary L-mm']
-            if 'Primary W-mm' in data_dict:
-                ws['C11'] = data_dict['Primary W-mm']
-            if 'Primary H-mm' in data_dict:
-                ws['D11'] = data_dict['Primary H-mm']
-            if 'Primary Qty/Pack' in data_dict:
-                ws['E11'] = data_dict['Primary Qty/Pack']
-            if 'Primary Empty Weight' in data_dict:
-                ws['F11'] = data_dict['Primary Empty Weight']
-            if 'Primary Pack Weight' in data_dict:
-                ws['G11'] = data_dict['Primary Pack Weight']
+        # Secondary packaging
+        if form_data.get('Secondary Packaging Type'):
+            ws['A16'] = form_data['Secondary Packaging Type']
+        if form_data.get('Secondary L-mm'):
+            ws['B16'] = form_data['Secondary L-mm']
+        if form_data.get('Secondary W-mm'):
+            ws['C16'] = form_data['Secondary W-mm']
+        if form_data.get('Secondary H-mm'):
+            ws['D16'] = form_data['Secondary H-mm']
+        if form_data.get('Secondary Qty/Pack'):
+            ws['E16'] = form_data['Secondary Qty/Pack']
+        if form_data.get('Secondary Empty Weight'):
+            ws['F16'] = form_data['Secondary Empty Weight']
+        if form_data.get('Secondary Pack Weight'):
+            ws['G16'] = form_data['Secondary Pack Weight']
             
-            # Secondary packaging information
-            if 'Secondary Packaging Type' in data_dict:
-                ws['A16'] = data_dict['Secondary Packaging Type']
-            if 'Secondary L-mm' in data_dict:
-                ws['B16'] = data_dict['Secondary L-mm']
-            if 'Secondary W-mm' in data_dict:
-                ws['C16'] = data_dict['Secondary W-mm']
-            if 'Secondary H-mm' in data_dict:
-                ws['D16'] = data_dict['Secondary H-mm']
-            if 'Secondary Qty/Pack' in data_dict:
-                ws['E16'] = data_dict['Secondary Qty/Pack']
-            if 'Secondary Empty Weight' in data_dict:
-                ws['F16'] = data_dict['Secondary Empty Weight']
-            if 'Secondary Pack Weight' in data_dict:
-                ws['G16'] = data_dict['Secondary Pack Weight']
-            
-            # Packaging procedures (steps 1-10)
-            for i in range(1, 11):
-                step_key = f'Procedure Step {i}'
-                if step_key in data_dict and data_dict[step_key]:
-                    row = 19 + i
-                    ws[f'B{row}'] = data_dict[step_key]
-            
-            # Additional fields
-            if 'Problem If Any' in data_dict:
-                ws['L10'] = f"PROBLEM IF ANY: {data_dict['Problem If Any']}"
-            if 'Caution' in data_dict:
-                ws['L11'] = f"CAUTION: {data_dict['Caution']}"
-            
-            # Approval information (can be placed in signature areas if needed)
-            # Note: The template has signature boxes, so we might want to add text above them
-            
-            # Add images if provided
-            if images_data:
-                # Add Primary Packaging image
-                if images_data['Primary Packaging']:
-                    self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A32', 'C37')
+        # Procedure steps
+        for i in range(1, 11):
+            step_key = f'Procedure Step {i}'
+            if form_data.get(step_key):
+                row = 19 + i
+                ws[f'B{row}'] = form_data[step_key]
                 
-                # Add Secondary Packaging image  
-                if images_data['Secondary Packaging']:
-                    self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'E32', 'F37')
-                
-                # Add Label image
-                if images_data['Label']:
-                    self.add_image_to_cell_range(ws, images_data['Label'], 'H32', 'K37')
-                
-                # Add Current Packaging image (right side)
-                if images_data['Current Packaging']:
-                    self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L1', 'L9')
+        # Approval fields
+        if form_data.get('Issued By'):
+            ws['B39'] = f"Name & Sign: {form_data['Issued By']}"
+        if form_data.get('Reviewed By'):
+            ws['B40'] = f"Name & Sign: {form_data['Reviewed By']}"
+        if form_data.get('Approved By'):
+            ws['B41'] = f"Name & Sign: {form_data['Approved By']}"
             
-        except Exception as e:
-            st.warning(f"Error populating template: {str(e)}")
-        
+        # Add date if provided
+        if form_data.get('Date'):
+            ws['G2'] = form_data['Date']
+            
+        # Problem and Caution fields
+        if form_data.get('Problem If Any'):
+            ws['L12'] = form_data['Problem If Any']
+        if form_data.get('Caution'):
+            ws['L13'] = form_data['Caution']
+            
+        # Add images if provided
+        if images_data:
+            # Current Packaging image (L2:L8 area)
+            if images_data.get('Current Packaging'):
+                self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L2', 'L8')
+                
+            # Primary Packaging image (A32:C37)
+            if images_data.get('Primary Packaging'):
+                self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A32', 'C37')
+                
+            # Secondary Packaging image (D32:G37)
+            if images_data.get('Secondary Packaging'):
+                self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'D32', 'G37')
+                
+            # Label image (H32:J37)
+            if images_data.get('Label'):
+                self.add_image_to_cell_range(ws, images_data['Label'], 'H32', 'J37')
+                
         return wb
-    
-    def save_template_to_buffer(self, wb):
-        """Save workbook to BytesIO buffer for download"""
-        buffer = io.BytesIO()
-        wb.save(buffer)
-        buffer.seek(0)
-        return buffer
-# Streamlit App
+
 def main():
-    st.set_page_config(
-        page_title="Packaging Instruction Template Manager",
-        page_icon="📦",
-        layout="wide"
-    )
+    st.set_page_config(page_title="Exact Packaging Template Generator", layout="wide")
+    st.title("🏭 Packaging Instruction Template Generator")
+    st.markdown("Generate packaging instruction templates that match your exact specifications")
     
-    st.title("📦 Packaging Instruction Template Manager")
-    st.markdown("Create and populate packaging instruction templates with your data")
-    
-    # Initialize the manager
-    manager = ExactPackagingTemplateManager()
+    # Initialize template manager
+    template_manager = ExactPackagingTemplateManager()
     
     # Sidebar for navigation
-    st.sidebar.title("Options")
-    mode = st.sidebar.radio(
-        "Choose Mode:",
-        ["Create Empty Template", "Populate from File", "Extract & Populate"]
-    )
+    st.sidebar.title("Navigation")
+    mode = st.sidebar.selectbox("Select Mode", ["Create New Template", "Upload & Modify Existing"])
     
-    if mode == "Create Empty Template":
-        st.header("Create Empty Template")
-        st.write("Generate a blank packaging instruction template")
+    if mode == "Create New Template":
+        st.header("📝 Create New Packaging Template")
         
-        if st.button("Generate Empty Template", type="primary"):
-            with st.spinner("Creating template..."):
-                try:
-                    wb = manager.create_exact_template_excel()
-                    buffer = manager.save_template_to_buffer(wb)
-                    
-                    st.success("Template created successfully!")
-                    st.download_button(
-                        label="📥 Download Empty Template",
-                        data=buffer.getvalue(),
-                        file_name="packaging_instruction_template.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-                except Exception as e:
-                    st.error(f"Error creating template: {str(e)}")
-    
-    elif mode == "Populate from File":
-        st.header("Populate Template from Data File")
-        st.write("Upload a CSV or Excel file with your data to populate the template")
+        # Create form in columns
+        col1, col2 = st.columns(2)
         
-        uploaded_file = st.file_uploader(
-            "Upload your data file",
-            type=['csv', 'xlsx', 'xls'],
-            help="Upload a CSV or Excel file containing your packaging data"
-        )
-        
-        if uploaded_file is not None:
-            st.success(f"File uploaded: {uploaded_file.name}")
+        with col1:
+            st.subheader("📋 Basic Information")
+            revision_no = st.text_input("Revision No.", value="Revision 1")
+            date = st.date_input("Date")
             
-            # Show data preview
-            try:
-                if uploaded_file.name.endswith('.csv'):
-                    df = pd.read_csv(uploaded_file)
-                else:
-                    df = pd.read_excel(uploaded_file, engine='openpyxl')
-                
-                st.subheader("Data Preview")
-                st.dataframe(df.head())
-                
-                # Extract data
-                data_dict = manager.extract_data_from_uploaded_file(uploaded_file)
-                
-                if data_dict:
-                    st.subheader("Extracted Data")
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.write("**Vendor Information:**")
-                        st.write(f"- Code: {data_dict.get('Vendor Code', 'N/A')}")
-                        st.write(f"- Name: {data_dict.get('Vendor Name', 'N/A')}")
-                        st.write(f"- Location: {data_dict.get('Vendor Location', 'N/A')}")
-                        
-                        st.write("**Part Information:**")
-                        st.write(f"- Part No.: {data_dict.get('Part No.', 'N/A')}")
-                        st.write(f"- Description: {data_dict.get('Part Description', 'N/A')}")
-                        st.write(f"- Weight: {data_dict.get('Part Unit Weight', 'N/A')}")
-                    
-                    with col2:
-                        st.write("**Primary Packaging:**")
-                        st.write(f"- Type: {data_dict.get('Primary Packaging Type', 'N/A')}")
-                        st.write(f"- Dimensions: {data_dict.get('Primary L-mm', 'N/A')} x {data_dict.get('Primary W-mm', 'N/A')} x {data_dict.get('Primary H-mm', 'N/A')}")
-                        
-                        st.write("**Secondary Packaging:**")
-                        st.write(f"- Type: {data_dict.get('Secondary Packaging Type', 'N/A')}")
-                        st.write(f"- Dimensions: {data_dict.get('Secondary L-mm', 'N/A')} x {data_dict.get('Secondary W-mm', 'N/A')} x {data_dict.get('Secondary H-mm', 'N/A')}")
-                    
-                    if st.button("Generate Populated Template", type="primary"):
-                        with st.spinner("Creating populated template..."):
-                            try:
-                                wb = manager.create_exact_template_excel()
-                                wb = manager.populate_template_with_data(wb, data_dict)
-                                buffer = manager.save_template_to_buffer(wb)
-                                
-                                st.success("Populated template created successfully!")
-                                st.download_button(
-                                    label="📥 Download Populated Template",
-                                    data=buffer.getvalue(),
-                                    file_name=f"packaging_instruction_{data_dict.get('Part No.', 'populated')}.xlsx",
-                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                )
-                            except Exception as e:
-                                st.error(f"Error creating populated template: {str(e)}")
-                else:
-                    st.warning("No valid data found in the uploaded file.")
-                
-            except Exception as e:
-                st.error(f"Error processing file: {str(e)}")
-    
-    elif mode == "Extract & Populate":
-        st.header("Extract Data & Images from Excel Template")
-        st.write("Upload an existing Excel template to extract data and images, then create a new populated template")
-        
-        uploaded_file = st.file_uploader(
-            "Upload existing Excel template",
-            type=['xlsx'],
-            help="Upload an Excel file with existing packaging instruction data"
-        )
-        
-        if uploaded_file is not None:
-            st.success(f"File uploaded: {uploaded_file.name}")
+            st.subheader("🏢 Vendor Information")
+            vendor_code = st.text_input("Vendor Code")
+            vendor_name = st.text_input("Vendor Name")
+            vendor_location = st.text_input("Vendor Location")
             
-            # Initialize variables with defaults
-            data_dict = {}
-            images_data = {
-                'Current Packaging': None,
-                'Primary Packaging': None,
-                'Secondary Packaging': None,
-                'Label': None
+        with col2:
+            st.subheader("🔧 Part Information")
+            part_no = st.text_input("Part No.")
+            part_description = st.text_area("Part Description", height=100)
+            
+            col2a, col2b = st.columns(2)
+            with col2a:
+                part_unit_weight = st.number_input("Part Unit Weight", min_value=0.0, format="%.2f")
+            with col2b:
+                part_weight_unit = st.selectbox("Weight Unit", ["kg", "g", "lbs"])
+                
+            st.write("**Part Dimensions**")
+            col2c, col2d, col2e = st.columns(3)
+            with col2c:
+                part_l = st.number_input("Length (L)", min_value=0.0, format="%.2f")
+            with col2d:
+                part_w = st.number_input("Width (W)", min_value=0.0, format="%.2f")
+            with col2e:
+                part_h = st.number_input("Height (H)", min_value=0.0, format="%.2f")
+        
+        # Packaging sections
+        st.subheader("📦 Primary Packaging")
+        col3, col4 = st.columns(2)
+        
+        with col3:
+            primary_packaging_type = st.selectbox("Primary Packaging Type", 
+                                                 ["", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS", "Custom"])
+            if primary_packaging_type == "Custom":
+                primary_packaging_type = st.text_input("Enter Custom Primary Packaging Type")
+                
+            col3a, col3b, col3c = st.columns(3)
+            with col3a:
+                primary_l = st.number_input("Primary L (mm)", min_value=0.0, format="%.2f", key="prim_l")
+            with col3b:
+                primary_w = st.number_input("Primary W (mm)", min_value=0.0, format="%.2f", key="prim_w")
+            with col3c:
+                primary_h = st.number_input("Primary H (mm)", min_value=0.0, format="%.2f", key="prim_h")
+                
+        with col4:
+            col4a, col4b = st.columns(2)
+            with col4a:
+                primary_qty = st.number_input("Primary Qty/Pack", min_value=0, key="prim_qty")
+                primary_empty_weight = st.number_input("Primary Empty Weight", min_value=0.0, format="%.2f", key="prim_empty")
+            with col4b:
+                primary_pack_weight = st.number_input("Primary Pack Weight", min_value=0.0, format="%.2f", key="prim_pack")
+                
+        st.subheader("📦 Secondary Packaging")
+        col5, col6 = st.columns(2)
+        
+        with col5:
+            secondary_packaging_type = st.text_input("Secondary Packaging Type")
+            col5a, col5b, col5c = st.columns(3)
+            with col5a:
+                secondary_l = st.number_input("Secondary L (mm)", min_value=0.0, format="%.2f", key="sec_l")
+            with col5b:
+                secondary_w = st.number_input("Secondary W (mm)", min_value=0.0, format="%.2f", key="sec_w")
+            with col5c:
+                secondary_h = st.number_input("Secondary H (mm)", min_value=0.0, format="%.2f", key="sec_h")
+                
+        with col6:
+            col6a, col6b = st.columns(2)
+            with col6a:
+                secondary_qty = st.number_input("Secondary Qty/Pack", min_value=0, key="sec_qty")
+                secondary_empty_weight = st.number_input("Secondary Empty Weight", min_value=0.0, format="%.2f", key="sec_empty")
+            with col6b:
+                secondary_pack_weight = st.number_input("Secondary Pack Weight", min_value=0.0, format="%.2f", key="sec_pack")
+        
+        # Auto-populate procedure steps if predefined packaging type is selected
+        procedure_steps = [""] * 10
+        if primary_packaging_type and primary_packaging_type in template_manager.packaging_procedures:
+            procedure_steps = template_manager.get_procedure_steps(primary_packaging_type)
+            
+        st.subheader("📋 Packaging Procedure Steps")
+        st.info("Procedure steps are auto-populated based on the selected primary packaging type. You can modify them as needed.")
+        
+        # Create procedure steps in a more compact layout
+        col7, col8 = st.columns(2)
+        
+        with col7:
+            step_1 = st.text_area("Step 1", value=procedure_steps[0], height=60)
+            step_2 = st.text_area("Step 2", value=procedure_steps[1], height=60)
+            step_3 = st.text_area("Step 3", value=procedure_steps[2], height=60)
+            step_4 = st.text_area("Step 4", value=procedure_steps[3], height=60)
+            step_5 = st.text_area("Step 5", value=procedure_steps[4], height=60)
+            
+        with col8:
+            step_6 = st.text_area("Step 6", value=procedure_steps[5], height=60)
+            step_7 = st.text_area("Step 7", value=procedure_steps[6], height=60)
+            step_8 = st.text_area("Step 8", value=procedure_steps[7], height=60)
+            step_9 = st.text_area("Step 9", value=procedure_steps[8], height=60)
+            step_10 = st.text_area("Step 10", value=procedure_steps[9], height=60)
+        
+        st.subheader("✅ Approval Information")
+        col9, col10, col11 = st.columns(3)
+        
+        with col9:
+            issued_by = st.text_input("Issued By")
+        with col10:
+            reviewed_by = st.text_input("Reviewed By")
+        with col11:
+            approved_by = st.text_input("Approved By")
+            
+        st.subheader("⚠️ Additional Information")
+        col12, col13 = st.columns(2)
+        with col12:
+            problem_if_any = st.text_area("Problem If Any", height=80)
+        with col13:
+            caution = st.text_area("Caution", value="REVISED DESIGN", height=80)
+        
+        # Image upload section
+        st.subheader("🖼️ Upload Images")
+        col14, col15 = st.columns(2)
+        
+        with col14:
+            current_packaging_img = st.file_uploader("Current Packaging Image", type=['png', 'jpg', 'jpeg'])
+            primary_packaging_img = st.file_uploader("Primary Packaging Image", type=['png', 'jpg', 'jpeg'])
+            
+        with col15:
+            secondary_packaging_img = st.file_uploader("Secondary Packaging Image", type=['png', 'jpg', 'jpeg'])
+            label_img = st.file_uploader("Label Image", type=['png', 'jpg', 'jpeg'])
+        
+        # Generate template button
+        if st.button("🚀 Generate Template", type="primary", use_container_width=True):
+            # Prepare form data
+            form_data = {
+                'Revision No.': revision_no,
+                'Date': str(date) if date else '',
+                'Vendor Code': vendor_code,
+                'Vendor Name': vendor_name,
+                'Vendor Location': vendor_location,
+                'Part No.': part_no,
+                'Part Description': part_description,
+                'Part Unit Weight': part_unit_weight,
+                'Part Weight Unit': part_weight_unit,
+                'Part L': part_l,
+                'Part W': part_w,
+                'Part H': part_h,
+                'Primary Packaging Type': primary_packaging_type,
+                'Primary L-mm': primary_l,
+                'Primary W-mm': primary_w,
+                'Primary H-mm': primary_h,
+                'Primary Qty/Pack': primary_qty,
+                'Primary Empty Weight': primary_empty_weight,
+                'Primary Pack Weight': primary_pack_weight,
+                'Secondary Packaging Type': secondary_packaging_type,
+                'Secondary L-mm': secondary_l,
+                'Secondary W-mm': secondary_w,
+                'Secondary H-mm': secondary_h,
+                'Secondary Qty/Pack': secondary_qty,
+                'Secondary Empty Weight': secondary_empty_weight,
+                'Secondary Pack Weight': secondary_pack_weight,
+                'Procedure Step 1': step_1,
+                'Procedure Step 2': step_2,
+                'Procedure Step 3': step_3,
+                'Procedure Step 4': step_4,
+                'Procedure Step 5': step_5,
+                'Procedure Step 6': step_6,
+                'Procedure Step 7': step_7,
+                'Procedure Step 8': step_8,
+                'Procedure Step 9': step_9,
+                'Procedure Step 10': step_10,
+                'Issued By': issued_by,
+                'Reviewed By': reviewed_by,
+                'Approved By': approved_by,
+                'Problem If Any': problem_if_any,
+                'Caution': caution
             }
             
-            with st.spinner("Extracting data and images..."):
-                try:
-                    # Extract data
-                    data_dict = manager.extract_data_from_uploaded_file(uploaded_file)
-                    st.info("✅ Data extraction completed")
-                except Exception as e:
-                    st.warning(f"Data extraction failed: {str(e)}")
-                    data_dict = {}
+            # Prepare images
+            images_data = {}
+            if current_packaging_img:
+                images_data['Current Packaging'] = PILImage.open(current_packaging_img)
+            if primary_packaging_img:
+                images_data['Primary Packaging'] = PILImage.open(primary_packaging_img)
+            if secondary_packaging_img:
+                images_data['Secondary Packaging'] = PILImage.open(secondary_packaging_img)
+            if label_img:
+                images_data['Label'] = PILImage.open(label_img)
+            
+            try:
+                # Create and populate template
+                wb = template_manager.create_exact_template_excel()
+                wb = template_manager.populate_template_with_data(wb, form_data, images_data)
                 
-                try:
-                    # Extract images
-                    images_data = manager.extract_images_from_excel(uploaded_file)
-                    st.info("✅ Image extraction completed")
-                except Exception as e:
-                    st.warning(f"Image extraction failed: {str(e)}")
-                    # Keep default empty images_data
-            
-            # Show extracted data
-            if data_dict:
-                st.subheader("📊 Extracted Data Summary")
-                non_empty_data = {k: v for k, v in data_dict.items() if v}
-                if non_empty_data:
-                    # Create a more readable display
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.write("**Key Information:**")
-                        for key, value in list(non_empty_data.items())[:len(non_empty_data)//2]:
-                            st.write(f"- **{key}**: {value}")
-                    
-                    with col2:
-                        st.write("**Additional Details:**")
-                        for key, value in list(non_empty_data.items())[len(non_empty_data)//2:]:
-                            st.write(f"- **{key}**: {value}")
-                else:
-                    st.info("No data found in the uploaded file.")
-            else:
-                st.info("No data could be extracted from the file.")
-            
-            # Show extracted images info with preview
-            st.subheader("🖼️ Extracted Images")
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                if images_data['Primary Packaging']:
-                    st.success("✅ Primary Packaging Image")
-                    st.image(images_data['Primary Packaging'], caption="Primary Packaging", width=150)
-                else:
-                    st.info("❌ No Primary Packaging Image")
-            
-            with col2:
-                if images_data['Secondary Packaging']:
-                    st.success("✅ Secondary Packaging Image")
-                    st.image(images_data['Secondary Packaging'], caption="Secondary Packaging", width=150)
-                else:
-                    st.info("❌ No Secondary Packaging Image")
-            
-            with col3:
-                if images_data['Label']:
-                    st.success("✅ Label Image")
-                    st.image(images_data['Label'], caption="Label", width=150)
-                else:
-                    st.info("❌ No Label Image")
-            
-            with col4:
-                if images_data['Current Packaging']:
-                    st.success("✅ Current Packaging Image")
-                    st.image(images_data['Current Packaging'], caption="Current Packaging", width=150)
-                else:
-                    st.info("❌ No Current Packaging Image")
-            
-            # Show generation button only if we have some data or images
-            has_data = bool(data_dict)
-            has_images = any(images_data.values())
-            
-            if has_data or has_images:
-                st.subheader("📋 Generate New Template")
+                # Save to bytes
+                output = io.BytesIO()
+                wb.save(output)
+                output.seek(0)
                 
-                if st.button("Generate New Template with Extracted Data", type="primary"):
-                    with st.spinner("Creating new template with extracted data..."):
-                        try:
-                            wb = manager.create_exact_template_excel()
-                            wb = manager.populate_template_with_data(wb, data_dict, images_data)
-                            buffer = manager.save_template_to_buffer(wb)
-                            
-                            st.success("New template created with extracted data and images!")
-                            
-                            # Show what was included
-                            included_items = []
-                            if data_dict:
-                                included_items.append(f"{len([v for v in data_dict.values() if v])} data fields")
-                            if has_images:
-                                image_count = len([v for v in images_data.values() if v])
-                                included_items.append(f"{image_count} images")
-                            
-                            st.info(f"Template includes: {', '.join(included_items)}")
-                            
-                            st.download_button(
-                                label="📥 Download New Template",
-                                data=buffer.getvalue(),
-                                file_name=f"extracted_packaging_instruction_{data_dict.get('Part No.', 'template')}.xlsx",
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            )
-                        except Exception as e:
-                            st.error(f"Error creating new template: {str(e)}")
-            else:
-                st.warning("No data or images were extracted. Please check if the file contains valid packaging instruction data.")
+                # Download button
+                filename = f"packaging_instruction_{part_no}_{str(date)}.xlsx".replace(" ", "_")
+                st.download_button(
+                    label="📥 Download Template",
+                    data=output.getvalue(),
+                    file_name=filename,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+                st.success("✅ Template generated successfully!")
+                
+            except Exception as e:
+                st.error(f"❌ Error generating template: {str(e)}")
     
-    # Footer
-    st.markdown("---")
-    st.markdown("*Packaging Instruction Template Manager v1.0*")
-
+    elif mode == "Upload & Modify Existing":
+        st.header("📤 Upload & Modify Existing Template")
+        
+        uploaded_file = st.file_uploader("Upload Excel Template", type=['xlsx', 'xls'])
+        
+        if uploaded_file is not None:
+            try:
+                # Read the existing file
+                df = pd.read_excel(uploaded_file, engine='openpyxl')
+                st.success("✅ File uploaded successfully!")
+                
+                # Try to extract images
+                with st.spinner("🔍 Extracting images from Excel file..."):
+                    images_data = template_manager.extract_images_from_excel(uploaded_file)
+                
+                # Display extracted images
+                if any(images_data.values()):
+                    st.subheader("🖼️ Extracted Images")
+                    cols = st.columns(4)
+                    
+                    for idx, (category, image) in enumerate(images_data.items()):
+                        with cols[idx % 4]:
+                            if image:
+                                st.image(image, caption=category, use_column_width=True)
+                            else:
+                                st.info(f"No {category} image found")
+                
+                # Allow modification of extracted data
+                st.subheader("✏️ Modify Template Data")
+                st.info("Modify the fields below and regenerate the template")
+                
+                # Here you can add form fields similar to the "Create New Template" section
+                # but pre-populated with data extracted from the uploaded file
+                
+            except Exception as e:
+                st.error(f"❌ Error reading file: {str(e)}")
 
 if __name__ == "__main__":
     main()
