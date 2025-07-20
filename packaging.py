@@ -82,20 +82,37 @@ class ExactPackagingTemplateManager:
             'Secondary Packaging': None,
             'Label': None
         }
-        
         try:
             # Save uploaded file to temporary location
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
                 tmp_file.write(uploaded_file.getvalue())
                 tmp_file_path = tmp_file.name
-            
             # Load workbook and extract images
             wb = load_workbook(tmp_file_path)
             ws = wb.active
-            
+        
+            # First, let's find the header row and column positions dynamically
+            header_positions = {}
+        
+            # Search for headers in the worksheet (typically in first few rows)
+            for row_idx in range(1, 10):  # Check first 10 rows for headers
+                for col_idx in range(1, ws.max_column + 1):
+                    cell_value = ws.cell(row=row_idx, column=col_idx).value
+                    if cell_value:
+                        cell_value = str(cell_value).strip().lower()
+                        if "current packaging image" in cell_value:
+                            header_positions['Current Packaging'] = col_idx - 1  # Convert to 0-based
+                        elif "primary packaging image" in cell_value:
+                            header_positions['Primary Packaging'] = col_idx - 1
+                        elif "secondary packaging image" in cell_value:
+                            header_positions['Secondary Packaging'] = col_idx - 1
+                        elif "label image" in cell_value:
+                            header_positions['Label'] = col_idx - 1
+            st.info(f"Found header positions: {header_positions}")
+        
             # Debug: Print total number of images found
             st.info(f"Found {len(ws._images) if hasattr(ws, '_images') and ws._images else 0} images in the worksheet")
-            
+        
             # Extract all images from the worksheet
             if hasattr(ws, '_images') and ws._images:
                 for idx, img in enumerate(ws._images):
@@ -103,112 +120,75 @@ class ExactPackagingTemplateManager:
                         # Convert image to PIL Image
                         image_stream = io.BytesIO(img._data())
                         pil_image = PILImage.open(image_stream)
-                        
+                    
                         # Get anchor information to determine image location
                         anchor = img.anchor
-                        
-                        # More flexible anchor checking
+                        col_idx = None
+                        row_idx = None
+                    
+                        # Get column and row from anchor
                         if hasattr(anchor, '_from') and anchor._from:
                             col_idx = anchor._from.col
                             row_idx = anchor._from.row
-                            
-                            # Debug info
-                            st.write(f"Image {idx+1}: Located at column {col_idx}, row {row_idx}")
-                            
-                            # Determine image type based on location (0-indexed)
-                            # Primary packaging area (A32:C37 = cols 0-2, rows 31-36)
-                            if 0 <= col_idx <= 2 and 30 <= row_idx <= 36:
-                                images_data['Primary Packaging'] = pil_image
-                                st.success(f"✅ Primary Packaging image found at col {col_idx}, row {row_idx}")
-                            
-                            # Secondary packaging area (E32:F37 = cols 4-5, rows 31-36)  
-                            elif 4 <= col_idx <= 5 and 30 <= row_idx <= 36:
-                                images_data['Secondary Packaging'] = pil_image
-                                st.success(f"✅ Secondary Packaging image found at col {col_idx}, row {row_idx}")
-                            
-                            # Label area (H32:K37 = cols 7-10, rows 31-36)
-                            elif 7 <= col_idx <= 10 and 30 <= row_idx <= 36:
-                                images_data['Label'] = pil_image
-                                st.success(f"✅ Label image found at col {col_idx}, row {row_idx}")
-                            
-                            # Current packaging column (L = col 11, any row)
-                            elif col_idx == 11:
-                                images_data['Current Packaging'] = pil_image
-                                st.success(f"✅ Current Packaging image found at col {col_idx}, row {row_idx}")
-                            
-                            # If image doesn't match expected locations, try alternative approach
-                            else:
-                                # Check if image overlaps with any of our target areas
-                                # This handles cases where images might be positioned slightly differently
-                                
-                                # For images in columns A-C (Primary)
-                                if 0 <= col_idx <= 2:
-                                    images_data['Primary Packaging'] = pil_image
-                                    st.success(f"✅ Primary Packaging image found (fallback) at col {col_idx}, row {row_idx}")
-                                
-                                # For images in columns D-F (Secondary) 
-                                elif 3 <= col_idx <= 5:
-                                    images_data['Secondary Packaging'] = pil_image
-                                    st.success(f"✅ Secondary Packaging image found (fallback) at col {col_idx}, row {row_idx}")
-                                
-                                # For images in columns G-K (Label)
-                                elif 6 <= col_idx <= 10:
-                                    images_data['Label'] = pil_image
-                                    st.success(f"✅ Label image found (fallback) at col {col_idx}, row {row_idx}")
-                                
-                                # For images in column L (Current)
-                                elif col_idx >= 11:
-                                    images_data['Current Packaging'] = pil_image
-                                    st.success(f"✅ Current Packaging image found (fallback) at col {col_idx}, row {row_idx}")
-                                
-                                else:
-                                    st.warning(f"⚠️ Image {idx+1} found at unexpected location: col {col_idx}, row {row_idx}")
-                        
-                        # Alternative anchor checking for different openpyxl versions
                         elif hasattr(anchor, 'col') and hasattr(anchor, 'row'):
                             col_idx = anchor.col
                             row_idx = anchor.row
-                            
-                            st.write(f"Image {idx+1} (alt method): Located at column {col_idx}, row {row_idx}")
-                            
-                            # Apply same logic as above
-                            if 0 <= col_idx <= 2 and 30 <= row_idx <= 36:
-                                images_data['Primary Packaging'] = pil_image
-                            elif 4 <= col_idx <= 5 and 30 <= row_idx <= 36:
-                                images_data['Secondary Packaging'] = pil_image
-                            elif 7 <= col_idx <= 10 and 30 <= row_idx <= 36:
-                                images_data['Label'] = pil_image
-                            elif col_idx == 11:
-                                images_data['Current Packaging'] = pil_image
+                        if col_idx is not None:
+                            st.write(f"Image {idx+1}: Located at column {col_idx}, row {row_idx}")
+                            # Map image to correct category based on header positions
+                            assigned = False
                         
+                            for category, expected_col in header_positions.items():
+                                # Allow some flexibility in column matching (±1 column)
+                                if abs(col_idx - expected_col) <= 1:
+                                    images_data[category] = pil_image
+                                    st.success(f"✅ {category} image found at col {col_idx}, row {row_idx}")
+                                    assigned = True
+                                    break
+                            if not assigned:
+                                st.warning(f"⚠️ Image {idx+1} found at unexpected location: col {col_idx}, row {row_idx}")
+                                # Fallback: Try to map based on approximate column ranges
+                                # Based on your Excel screenshot, the columns appear to be around BM-BP range
+                            
+                                # If we couldn't find headers, use approximate column positions
+                                # BM ≈ column 65, BN ≈ column 66, BO ≈ column 67, BP ≈ column 68
+                                if 64 <= col_idx <= 65:  # BM-BN range
+                                    if not images_data['Current Packaging']:
+                                        images_data['Current Packaging'] = pil_image
+                                        st.info("Assigned to Current Packaging (fallback)")
+                                    elif not images_data['Primary Packaging']:
+                                        images_data['Primary Packaging'] = pil_image
+                                        st.info("Assigned to Primary Packaging (fallback)")
+                                    elif 66 <= col_idx <= 67:  # BO-BP range
+                                        if not images_data['Secondary Packaging']:
+                                            images_data['Secondary Packaging'] = pil_image
+                                            st.info("Assigned to Secondary Packaging (fallback)")
+                                        elif not images_data['Label']:
+                                            images_data['Label'] = pil_image
+                                            st.info("Assigned to Label (fallback)")
                         else:
                             st.warning(f"Could not determine location for image {idx+1}")
-                            # As fallback, assign to first empty slot
-                            if not images_data['Primary Packaging']:
-                                images_data['Primary Packaging'] = pil_image
-                                st.info("Assigned to Primary Packaging (fallback)")
-                            elif not images_data['Secondary Packaging']:
-                                images_data['Secondary Packaging'] = pil_image
-                                st.info("Assigned to Secondary Packaging (fallback)")
-                            elif not images_data['Label']:
-                                images_data['Label'] = pil_image
-                                st.info("Assigned to Label (fallback)")
-                            elif not images_data['Current Packaging']:
-                                images_data['Current Packaging'] = pil_image
-                                st.info("Assigned to Current Packaging (fallback)")
-                    
+                            # Final fallback: assign to first empty slot
+                            for category in ['Current Packaging', 'Primary Packaging', 'Secondary Packaging', 'Label']:
+                                if not images_data[category]:
+                                    images_data[category] = pil_image
+                                    st.info(f"Assigned to {category} (final fallback)")
+                                    break
                     except Exception as img_error:
                         st.error(f"Error processing image {idx+1}: {str(img_error)}")
                         continue
-            
             else:
                 st.warning("No images found in the worksheet. Make sure images are properly embedded in the Excel file.")
-            
-            # Clean up temporary file
-            os.unlink(tmp_file_path)
-            
-            return images_data
-            
+                # Clean up temporary file
+                os.unlink(tmp_file_path)
+                # Show final results
+                st.info("Final image assignments:")
+                for category, image in images_data.items():
+                    if image:
+                        st.success(f"✅ {category}: Image assigned")
+                    else:
+                        st.warning(f"❌ {category}: No image found")
+                return images_data
         except Exception as e:
             st.error(f"Could not extract images: {str(e)}")
             return images_data
