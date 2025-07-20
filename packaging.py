@@ -1044,16 +1044,19 @@ def main():
         
         if st.button("Generate Empty Template", type="primary"):
             with st.spinner("Creating template..."):
-                wb = manager.create_exact_template_excel()
-                buffer = manager.save_template_to_buffer(wb)
-                
-                st.success("Template created successfully!")
-                st.download_button(
-                    label="📥 Download Empty Template",
-                    data=buffer.getvalue(),
-                    file_name="packaging_instruction_template.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                try:
+                    wb = manager.create_exact_template_excel()
+                    buffer = manager.save_template_to_buffer(wb)
+                    
+                    st.success("Template created successfully!")
+                    st.download_button(
+                        label="📥 Download Empty Template",
+                        data=buffer.getvalue(),
+                        file_name="packaging_instruction_template.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                except Exception as e:
+                    st.error(f"Error creating template: {str(e)}")
     
     elif mode == "Populate from File":
         st.header("Populate Template from Data File")
@@ -1107,17 +1110,22 @@ def main():
                     
                     if st.button("Generate Populated Template", type="primary"):
                         with st.spinner("Creating populated template..."):
-                            wb = manager.create_exact_template_excel()
-                            wb = manager.populate_template_with_data(wb, data_dict)
-                            buffer = manager.save_template_to_buffer(wb)
-                            
-                            st.success("Populated template created successfully!")
-                            st.download_button(
-                                label="📥 Download Populated Template",
-                                data=buffer.getvalue(),
-                                file_name=f"packaging_instruction_{data_dict.get('Part No.', 'populated')}.xlsx",
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            )
+                            try:
+                                wb = manager.create_exact_template_excel()
+                                wb = manager.populate_template_with_data(wb, data_dict)
+                                buffer = manager.save_template_to_buffer(wb)
+                                
+                                st.success("Populated template created successfully!")
+                                st.download_button(
+                                    label="📥 Download Populated Template",
+                                    data=buffer.getvalue(),
+                                    file_name=f"packaging_instruction_{data_dict.get('Part No.', 'populated')}.xlsx",
+                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                )
+                            except Exception as e:
+                                st.error(f"Error creating populated template: {str(e)}")
+                else:
+                    st.warning("No valid data found in the uploaded file.")
                 
             except Exception as e:
                 st.error(f"Error processing file: {str(e)}")
@@ -1135,60 +1143,122 @@ def main():
         if uploaded_file is not None:
             st.success(f"File uploaded: {uploaded_file.name}")
             
+            # Initialize variables with defaults
+            data_dict = {}
+            images_data = {
+                'Current Packaging': None,
+                'Primary Packaging': None,
+                'Secondary Packaging': None,
+                'Label': None
+            }
+            
             with st.spinner("Extracting data and images..."):
-                # Extract data
-                data_dict = manager.extract_data_from_uploaded_file(uploaded_file)
+                try:
+                    # Extract data
+                    data_dict = manager.extract_data_from_uploaded_file(uploaded_file)
+                    st.info("✅ Data extraction completed")
+                except Exception as e:
+                    st.warning(f"Data extraction failed: {str(e)}")
+                    data_dict = {}
                 
-                # Extract images
-                images_data = manager.extract_images_from_excel(uploaded_file)
-                
-                # Show extracted data
-                if data_dict:
-                    st.subheader("Extracted Data Summary")
-                    non_empty_data = {k: v for k, v in data_dict.items() if v}
-                    st.json(non_empty_data)
-                
-                # Show extracted images info
-                st.subheader("Extracted Images")
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    if images_data['Primary Packaging']:
-                        st.success("✅ Primary Packaging Image")
-                    else:
-                        st.info("❌ No Primary Packaging Image")
-                
-                with col2:
-                    if images_data['Secondary Packaging']:
-                        st.success("✅ Secondary Packaging Image")
-                    else:
-                        st.info("❌ No Secondary Packaging Image")
-                
-                with col3:
-                    if images_data['Label']:
-                        st.success("✅ Label Image")
-                    else:
-                        st.info("❌ No Label Image")
-                
-                with col4:
-                    if images_data['Current Packaging']:
-                        st.success("✅ Current Packaging Image")
-                    else:
-                        st.info("❌ No Current Packaging Image")
+                try:
+                    # Extract images
+                    images_data = manager.extract_images_from_excel(uploaded_file)
+                    st.info("✅ Image extraction completed")
+                except Exception as e:
+                    st.warning(f"Image extraction failed: {str(e)}")
+                    # Keep default empty images_data
+            
+            # Show extracted data
+            if data_dict:
+                st.subheader("📊 Extracted Data Summary")
+                non_empty_data = {k: v for k, v in data_dict.items() if v}
+                if non_empty_data:
+                    # Create a more readable display
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write("**Key Information:**")
+                        for key, value in list(non_empty_data.items())[:len(non_empty_data)//2]:
+                            st.write(f"- **{key}**: {value}")
+                    
+                    with col2:
+                        st.write("**Additional Details:**")
+                        for key, value in list(non_empty_data.items())[len(non_empty_data)//2:]:
+                            st.write(f"- **{key}**: {value}")
+                else:
+                    st.info("No data found in the uploaded file.")
+            else:
+                st.info("No data could be extracted from the file.")
+            
+            # Show extracted images info with preview
+            st.subheader("🖼️ Extracted Images")
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                if images_data['Primary Packaging']:
+                    st.success("✅ Primary Packaging Image")
+                    st.image(images_data['Primary Packaging'], caption="Primary Packaging", width=150)
+                else:
+                    st.info("❌ No Primary Packaging Image")
+            
+            with col2:
+                if images_data['Secondary Packaging']:
+                    st.success("✅ Secondary Packaging Image")
+                    st.image(images_data['Secondary Packaging'], caption="Secondary Packaging", width=150)
+                else:
+                    st.info("❌ No Secondary Packaging Image")
+            
+            with col3:
+                if images_data['Label']:
+                    st.success("✅ Label Image")
+                    st.image(images_data['Label'], caption="Label", width=150)
+                else:
+                    st.info("❌ No Label Image")
+            
+            with col4:
+                if images_data['Current Packaging']:
+                    st.success("✅ Current Packaging Image")
+                    st.image(images_data['Current Packaging'], caption="Current Packaging", width=150)
+                else:
+                    st.info("❌ No Current Packaging Image")
+            
+            # Show generation button only if we have some data or images
+            has_data = bool(data_dict)
+            has_images = any(images_data.values())
+            
+            if has_data or has_images:
+                st.subheader("📋 Generate New Template")
                 
                 if st.button("Generate New Template with Extracted Data", type="primary"):
                     with st.spinner("Creating new template with extracted data..."):
-                        wb = manager.create_exact_template_excel()
-                        wb = manager.populate_template_with_data(wb, data_dict, images_data)
-                        buffer = manager.save_template_to_buffer(wb)
-                        
-                        st.success("New template created with extracted data and images!")
-                        st.download_button(
-                            label="📥 Download New Template",
-                            data=buffer.getvalue(),
-                            file_name=f"extracted_packaging_instruction_{data_dict.get('Part No.', 'template')}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
+                        try:
+                            wb = manager.create_exact_template_excel()
+                            wb = manager.populate_template_with_data(wb, data_dict, images_data)
+                            buffer = manager.save_template_to_buffer(wb)
+                            
+                            st.success("New template created with extracted data and images!")
+                            
+                            # Show what was included
+                            included_items = []
+                            if data_dict:
+                                included_items.append(f"{len([v for v in data_dict.values() if v])} data fields")
+                            if has_images:
+                                image_count = len([v for v in images_data.values() if v])
+                                included_items.append(f"{image_count} images")
+                            
+                            st.info(f"Template includes: {', '.join(included_items)}")
+                            
+                            st.download_button(
+                                label="📥 Download New Template",
+                                data=buffer.getvalue(),
+                                file_name=f"extracted_packaging_instruction_{data_dict.get('Part No.', 'template')}.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            )
+                        except Exception as e:
+                            st.error(f"Error creating new template: {str(e)}")
+            else:
+                st.warning("No data or images were extracted. Please check if the file contains valid packaging instruction data.")
     
     # Footer
     st.markdown("---")
