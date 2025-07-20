@@ -82,6 +82,7 @@ class ExactPackagingTemplateManager:
             'Secondary Packaging': None,
             'Label': None
         }
+        tmp_file_path = None
         try:
             # Save uploaded file to temporary location
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
@@ -90,10 +91,10 @@ class ExactPackagingTemplateManager:
             # Load workbook and extract images
             wb = load_workbook(tmp_file_path)
             ws = wb.active
-        
+    
             # First, let's find the header row and column positions dynamically
             header_positions = {}
-        
+    
             # Search for headers in the worksheet (typically in first few rows)
             for row_idx in range(1, 10):  # Check first 10 rows for headers
                 for col_idx in range(1, ws.max_column + 1):
@@ -109,10 +110,11 @@ class ExactPackagingTemplateManager:
                         elif "label image" in cell_value:
                             header_positions['Label'] = col_idx - 1
             st.info(f"Found header positions: {header_positions}")
-        
+    
             # Debug: Print total number of images found
-            st.info(f"Found {len(ws._images) if hasattr(ws, '_images') and ws._images else 0} images in the worksheet")
-        
+            total_images = len(ws._images) if hasattr(ws, '_images') and ws._images else 0
+            st.info(f"Found {total_images} images in the worksheet")
+    
             # Extract all images from the worksheet
             if hasattr(ws, '_images') and ws._images:
                 for idx, img in enumerate(ws._images):
@@ -120,12 +122,12 @@ class ExactPackagingTemplateManager:
                         # Convert image to PIL Image
                         image_stream = io.BytesIO(img._data())
                         pil_image = PILImage.open(image_stream)
-                    
+                
                         # Get anchor information to determine image location
                         anchor = img.anchor
                         col_idx = None
                         row_idx = None
-                    
+                
                         # Get column and row from anchor
                         if hasattr(anchor, '_from') and anchor._from:
                             col_idx = anchor._from.col
@@ -133,11 +135,12 @@ class ExactPackagingTemplateManager:
                         elif hasattr(anchor, 'col') and hasattr(anchor, 'row'):
                             col_idx = anchor.col
                             row_idx = anchor.row
+                    
                         if col_idx is not None:
                             st.write(f"Image {idx+1}: Located at column {col_idx}, row {row_idx}")
                             # Map image to correct category based on header positions
                             assigned = False
-                        
+                    
                             for category, expected_col in header_positions.items():
                                 # Allow some flexibility in column matching (±1 column)
                                 if abs(col_idx - expected_col) <= 1:
@@ -149,7 +152,7 @@ class ExactPackagingTemplateManager:
                                 st.warning(f"⚠️ Image {idx+1} found at unexpected location: col {col_idx}, row {row_idx}")
                                 # Fallback: Try to map based on approximate column ranges
                                 # Based on your Excel screenshot, the columns appear to be around BM-BP range
-                            
+                        
                                 # If we couldn't find headers, use approximate column positions
                                 # BM ≈ column 65, BN ≈ column 66, BO ≈ column 67, BP ≈ column 68
                                 if 64 <= col_idx <= 65:  # BM-BN range
@@ -159,13 +162,20 @@ class ExactPackagingTemplateManager:
                                     elif not images_data['Primary Packaging']:
                                         images_data['Primary Packaging'] = pil_image
                                         st.info("Assigned to Primary Packaging (fallback)")
-                                    elif 66 <= col_idx <= 67:  # BO-BP range
-                                        if not images_data['Secondary Packaging']:
-                                            images_data['Secondary Packaging'] = pil_image
-                                            st.info("Assigned to Secondary Packaging (fallback)")
-                                        elif not images_data['Label']:
-                                            images_data['Label'] = pil_image
-                                            st.info("Assigned to Label (fallback)")
+                                elif 66 <= col_idx <= 67:  # BO-BP range
+                                    if not images_data['Secondary Packaging']:
+                                        images_data['Secondary Packaging'] = pil_image
+                                        st.info("Assigned to Secondary Packaging (fallback)")
+                                    elif not images_data['Label']:
+                                        images_data['Label'] = pil_image
+                                        st.info("Assigned to Label (fallback)")
+                                else:
+                                    # Final fallback: assign to first empty slot
+                                    for category in ['Current Packaging', 'Primary Packaging', 'Secondary Packaging', 'Label']:
+                                        if not images_data[category]:
+                                            images_data[category] = pil_image
+                                            st.info(f"Assigned to {category} (final fallback)")
+                                            break
                         else:
                             st.warning(f"Could not determine location for image {idx+1}")
                             # Final fallback: assign to first empty slot
@@ -179,8 +189,6 @@ class ExactPackagingTemplateManager:
                         continue
             else:
                 st.warning("No images found in the worksheet. Make sure images are properly embedded in the Excel file.")
-                # Clean up temporary file
-                os.unlink(tmp_file_path)
                 # Show final results
                 st.info("Final image assignments:")
                 for category, image in images_data.items():
@@ -192,7 +200,14 @@ class ExactPackagingTemplateManager:
         except Exception as e:
             st.error(f"Could not extract images: {str(e)}")
             return images_data
-    
+        finally:
+            # Clean up temporary file
+            if tmp_file_path and os.path.exists(tmp_file_path):
+                try:
+                    os.unlink(tmp_file_path)
+                except Exception as cleanup_error:
+                    st.warning(f"Could not clean up temporary file: {str(cleanup_error)}")
+
     def apply_border_to_range(self, ws, start_cell, end_cell):
         """Apply borders to a range of cells"""
         border = Border(left=Side(style='thin'), right=Side(style='thin'), 
