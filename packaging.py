@@ -554,9 +554,9 @@ class ExactPackagingTemplateManager:
                 # Secondary Packaging area (E32:F37) - 2 cols x 6 rows  
                 'E32:F37': {'width': 162, 'height': 96},   # 2*12*7*0.9 x 6*16*1.33*0.9
                 # Label area (H32:K37) - 4 cols x 6 rows
-                'H32:K37': {'width': 302, 'height': 96},   # 4*12*7*0.9 x 6*16*1.33*0.9
+                'H32:K37': {'width': 380, 'height': 96},   # 4*12*7*0.9 x 6*16*1.33*0.9
                 # Current Packaging area (L2:L8) - 1 col x 7 rows (tall)
-                'L2:L8': {'width': 226, 'height': 149},    # 30*7*0.9 x 7*16*1.33*0.9
+                'L2:L16': {'width': 380, 'height': 149},    # 30*7*0.9 x 7*16*1.33*0.9
             }
         
             # Create cell range key
