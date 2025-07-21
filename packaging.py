@@ -138,7 +138,7 @@ class ExactPackagingTemplateManager:
     def get_procedure_steps(self, packaging_type):
         """Get predefined procedure steps for selected packaging type"""
         return self.packaging_procedures.get(packaging_type, [""] * 10)
-    
+
     def extract_data_from_excel(self, uploaded_file):
         """Extract data from uploaded Excel file"""
         extracted_data = {}
@@ -424,7 +424,6 @@ class ExactPackagingTemplateManager:
         white_font = Font(color="FFFFFF", bold=True, size=12)
         black_font = Font(color="000000", bold=True, size=14)
         regular_font = Font(color="000000", size=12)
-        bold_font = Font(color="000000", bold=True, size=12)
         border = Border(left=Side(style='thin'), right=Side(style='thin'), 
                        top=Side(style='thin'), bottom=Side(style='thin'))
         center_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
@@ -444,7 +443,7 @@ class ExactPackagingTemplateManager:
         ws.column_dimensions['I'].width = 12
         ws.column_dimensions['J'].width = 12
         ws.column_dimensions['K'].width = 12
-        ws.column_dimensions['L'].width = 24
+        ws.column_dimensions['L'].width = 30
 
         # Set row heights
         for row in range(1, 51):
@@ -469,7 +468,7 @@ class ExactPackagingTemplateManager:
         ws['A2'] = "Revision No."
         ws['A2'].border = border
         ws['A2'].alignment = left_alignment
-        ws['A2'].font = bold_font
+        ws['A2'].font = regular_font
 
         ws.merge_cells('B2:E2')
         ws['B2'] = "Revision 1"
@@ -480,7 +479,7 @@ class ExactPackagingTemplateManager:
         ws['F2'] = "Date"
         ws['F2'].border = border
         ws['F2'].alignment = left_alignment
-        ws['F2'].font = bold_font
+        ws['F2'].font = regular_font
 
         # Merge cells for date value
         ws.merge_cells('G2:K2')
@@ -491,8 +490,6 @@ class ExactPackagingTemplateManager:
         ws['L2'] = ""
         ws['L2'].border = border
 
-        # Continue with remaining rows following the same pattern...
-        # (Rest of the template creation code remains the same)
         # Row 3 - empty with borders
         ws.merge_cells('B3:E3')
         ws['B3'] = ""
@@ -519,117 +516,440 @@ class ExactPackagingTemplateManager:
             ws[f'{col}4'] = ""
             ws[f'{col}4'].border = border
 
-        # Continue with remaining template structure...
-        # (The full template creation code continues here)
+        # Vendor Code Row
+        ws['A5'] = "Code"
+        ws['A5'].font = header_font
+        ws['A5'].alignment = left_alignment
+        ws['A5'].border = border
 
+        ws.merge_cells('B5:D5')
+        ws['B5'] = ""
+        self.apply_border_to_range(ws, 'B5', 'D5')
+
+        ws['E5'] = ""
+        ws['E5'].border = border
+        
+        # Part fields
+        ws['F5'] = "Part No."
+        ws['F5'].border = border
+        ws['F5'].alignment = left_alignment
+        ws['F5'].font = regular_font
+
+        ws.merge_cells('G5:K5')
+        ws['G5'] = ""
+        self.apply_border_to_range(ws, 'G5', 'K5')
+
+        ws['L5'] = ""
+        ws['L5'].border = border
+
+        # Vendor Name Row
+        ws['A6'] = "Name"
+        ws['A6'].font = header_font
+        ws['A6'].alignment = left_alignment
+        ws['A6'].border = border
+
+        ws.merge_cells('B6:D6')
+        ws['B6'] = ""
+        self.apply_border_to_range(ws, 'B6', 'D6')
+
+        ws['E6'] = ""
+        ws['E6'].border = border
+
+        ws['F6'] = "Description"
+        ws['F6'].border = border
+        ws['F6'].alignment = left_alignment
+        ws['F6'].font = regular_font
+
+        ws.merge_cells('G6:K6')
+        ws['G6'] = ""
+        self.apply_border_to_range(ws, 'G6', 'K6')
+
+        ws['L6'] = ""
+        ws['L6'].border = border
+
+        # Vendor Location Row
+        ws['A7'] = "Location"
+        ws['A7'].font = header_font
+        ws['A7'].alignment = left_alignment
+        ws['A7'].border = border
+
+        ws.merge_cells('B7:D7')
+        ws['B7'] = ""
+        self.apply_border_to_range(ws, 'B7', 'D7')
+
+        ws['E7'] = ""
+        ws['E7'].border = border
+
+        ws['F7'] = "Unit Weight"
+        ws['F7'].border = border
+        ws['F7'].alignment = left_alignment
+        ws['F7'].font = regular_font
+
+        ws.merge_cells('G7:K7')
+        ws['G7'] = ""
+        self.apply_border_to_range(ws, 'G7', 'K7')
+
+        ws['L7'] = ""
+        ws['L7'].border = border
+
+        # Additional row after Unit Weight (Row 8) for L, W, H
+        ws['F8'] = "L"
+        ws['F8'].border = border
+        ws['F8'].alignment = left_alignment
+        ws['F8'].font = regular_font
+
+        ws['G8'] = ""
+        ws['G8'].border = border
+
+        ws['H8'] = "W"
+        ws['H8'].border = border
+        ws['H8'].alignment = center_alignment
+        ws['H8'].font = regular_font
+
+        ws['I8'] = ""
+        ws['I8'].border = border
+
+        ws['J8'] = "H"
+        ws['J8'].border = border
+        ws['J8'].alignment = center_alignment
+        ws['J8'].font = regular_font
+
+        ws['K8'] = ""
+        ws['K8'].border = border
+
+        # Empty cells for A-E and L in row 8
+        for col in ['A', 'B', 'C', 'D', 'E', 'L']:
+            ws[f'{col}8'] = ""
+            ws[f'{col}8'].border = border
+
+        # Title row for Primary Packaging
+        ws.merge_cells('A9:K9')
+        ws['A9'] = "Primary Packaging Instruction (Primary / Internal)"
+        ws['A9'].fill = blue_fill
+        ws['A9'].font = white_font
+        ws['A9'].alignment = center_alignment
+        self.apply_border_to_range(ws, 'A9', 'K9')
+
+        ws['L9'] = "CURRENT PACKAGING"
+        ws['L9'].fill = blue_fill
+        ws['L9'].font = white_font
+        ws['L9'].border = border
+        ws['L9'].alignment = center_alignment
+
+        # Primary packaging headers
+        headers = ["Packaging Type", "L-mm", "W-mm", "H-mm", "Qty/Pack", "Empty Weight", "Pack Weight"]
+        for i, header in enumerate(headers):
+            col = chr(ord('A') + i)
+            ws[f'{col}10'] = header
+            ws[f'{col}10'].border = border
+            ws[f'{col}10'].alignment = center_alignment
+            ws[f'{col}10'].font = regular_font
+
+        # Empty cells for remaining columns in row 10
+        for col in ['H', 'I', 'J', 'K', 'L']:
+            ws[f'{col}10'] = ""
+            ws[f'{col}10'].border = border
+
+        # Primary packaging data rows (11-13)
+        for row in range(11, 14):
+            for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']:
+                ws[f'{col}{row}'] = ""
+                ws[f'{col}{row}'].border = border
+
+        # TOTAL row
+        ws['D13'] = "TOTAL"
+        ws['D13'].border = border
+        ws['D13'].font = black_font
+        ws['D13'].alignment = center_alignment
+
+        # Secondary Packaging Instruction header
+        ws.merge_cells('A14:J14')
+        ws['A14'] = "Secondary Packaging Instruction (Outer / External)"
+        ws['A14'].fill = blue_fill
+        ws['A14'].font = white_font
+        ws['A14'].alignment = center_alignment
+        self.apply_border_to_range(ws, 'A14', 'J14')
+
+        ws['K14'] = ""
+        ws['K14'].border = border
+
+        ws['L10'] = "PROBLEM IF ANY:"
+        ws['L10'].border = border
+        ws['L10'].font = black_font
+        ws['L10'].alignment = left_alignment
+
+        # Secondary packaging headers
+        for i, header in enumerate(headers):
+            col = chr(ord('A') + i)
+            ws[f'{col}15'] = header
+            ws[f'{col}15'].border = border
+            ws[f'{col}15'].alignment = center_alignment
+            ws[f'{col}15'].font = regular_font
+
+        # Empty cells for remaining columns in row 15
+        for col in ['H', 'I', 'J', 'K']:
+            ws[f'{col}15'] = ""
+            ws[f'{col}15'].border = border
+
+        ws['L11'] = "CAUTION: REVISED DESIGN"
+        ws['L11'].fill = red_fill
+        ws['L11'].font = white_font
+        ws['L11'].border = border
+        ws['L11'].alignment = center_alignment
+
+        # Secondary packaging data rows (16-18)
+        for row in range(16, 19):
+            for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']:
+                ws[f'{col}{row}'] = ""
+                ws[f'{col}{row}'].border = border
+
+        # TOTAL row for secondary
+        ws['D18'] = "TOTAL"
+        ws['D18'].border = border
+        ws['D18'].font = black_font
+        ws['D18'].alignment = center_alignment
+
+        # Packaging Procedure section
+        ws.merge_cells('A19:K19')
+        ws['A19'] = "Packaging Procedure"
+        ws['A19'].fill = blue_fill
+        ws['A19'].font = white_font
+        ws['A19'].alignment = center_alignment
+        self.apply_border_to_range(ws, 'A19', 'K19')
+
+        ws['L19'] = ""
+        ws['L19'].border = border
+
+        # Packaging procedure steps (rows 20-29) - WITH MERGED CELLS
+        for i in range(1, 11):
+            row = 19 + i
+            ws[f'A{row}'] = str(i)
+            ws[f'A{row}'].border = border
+            ws[f'A{row}'].alignment = center_alignment
+            ws[f'A{row}'].font = regular_font
+
+            # MERGE CELLS B to J for each procedure step
+            ws.merge_cells(f'B{row}:J{row}')
+            ws[f'B{row}'] = ""
+            ws[f'B{row}'].alignment = left_alignment
+            self.apply_border_to_range(ws, f'B{row}', f'J{row}')
+
+            # K and L columns
+            ws[f'K{row}'] = ""
+            ws[f'K{row}'].border = border
+            ws[f'L{row}'] = ""
+            ws[f'L{row}'].border = border
+
+        # Reference Images/Pictures section
+        ws.merge_cells('A30:K30')
+        ws['A30'] = "Reference Images/Pictures"
+        ws['A30'].fill = blue_fill
+        ws['A30'].font = white_font
+        ws['A30'].alignment = center_alignment
+        self.apply_border_to_range(ws, 'A30', 'K30')
+
+        ws['L30'] = ""
+        ws['L30'].border = border
+
+        # Image section headers
+        ws.merge_cells('A31:C31')
+        ws['A31'] = "Primary Packaging"
+        ws['A31'].alignment = center_alignment
+        ws['A31'].font = regular_font
+        self.apply_border_to_range(ws, 'A31', 'C31')
+
+        ws.merge_cells('D31:G31')
+        ws['D31'] = "Secondary Packaging"
+        ws['D31'].alignment = center_alignment
+        ws['D31'].font = regular_font
+        self.apply_border_to_range(ws, 'D31', 'G31')
+
+        ws.merge_cells('H31:J31')
+        ws['H31'] = "Label"
+        ws['H31'].alignment = center_alignment
+        ws['H31'].font = regular_font
+        self.apply_border_to_range(ws, 'H31', 'J31')
+
+        ws['K31'] = ""
+        ws['K31'].border = border
+        ws['L31'] = ""
+        ws['L31'].border = border
+
+        # Image placeholder areas (rows 32-37)
+        ws.merge_cells('A32:C37')
+        ws['A32'] = "Primary\nPackaging"
+        ws['A32'].alignment = center_alignment
+        ws['A32'].font = regular_font
+        self.apply_border_to_range(ws, 'A32', 'C37')
+
+        # Arrow 1
+        ws['D35'] = "→"
+        ws['D35'].border = border
+        ws['D35'].alignment = center_alignment
+        ws['D35'].font = Font(size=20, bold=True)
+
+        # Secondary Packaging image area
+        ws.merge_cells('E32:F37')
+        ws['E32'] = "SECONDARY\nPACKAGING"
+        ws['E32'].alignment = center_alignment
+        ws['E32'].font = regular_font
+        ws['E32'].fill = light_blue_fill
+        self.apply_border_to_range(ws, 'E32', 'F37')
+
+        # Arrow 2
+        ws['G35'] = "→"
+        ws['G35'].border = border
+        ws['G35'].alignment = center_alignment
+        ws['G35'].font = Font(size=20, bold=True)
+
+        # Label image area
+        ws.merge_cells('H32:K37')
+        ws['H32'] = "LABEL"
+        ws['H32'].alignment = center_alignment
+        ws['H32'].font = regular_font
+        self.apply_border_to_range(ws, 'H32', 'K37')
+
+        # Add borders to remaining cells in image section
+        for row in range(32, 38):
+            for col in ['D', 'G', 'L']:
+                if row != 35 or col != 'D':  # Skip D35 and G35 which have arrows
+                    if row != 35 or col != 'G':
+                        ws[f'{col}{row}'] = ""
+                        ws[f'{col}{row}'].border = border
+
+        # Approval Section
+        ws.merge_cells('A38:C38')
+        ws['A38'] = "Issued By"
+        ws['A38'].alignment = center_alignment
+        ws['A38'].font = regular_font
+        self.apply_border_to_range(ws, 'A38', 'C38')
+
+        ws.merge_cells('D38:G38')
+        ws['D38'] = "Reviewed By"
+        ws['D38'].alignment = center_alignment
+        ws['D38'].font = regular_font
+        self.apply_border_to_range(ws, 'D38', 'G38')
+
+        ws.merge_cells('H38:K38')
+        ws['H38'] = "Approved By"
+        ws['H38'].alignment = center_alignment
+        ws['H38'].font = regular_font
+        self.apply_border_to_range(ws, 'H38', 'K38')
+
+        ws['L38'] = ""
+        ws['L38'].border = border
+
+        # Signature boxes (rows 39-42)
+        ws.merge_cells('A39:C42')
+        ws['A39'] = ""
+        self.apply_border_to_range(ws, 'A39', 'C42')
+
+        ws.merge_cells('D39:G42')
+        ws['D39'] = ""
+        self.apply_border_to_range(ws, 'D39', 'G42')
+
+        ws.merge_cells('H39:K42')
+        ws['H39'] = ""
+        self.apply_border_to_range(ws, 'H39', 'K42')
+
+        # Apply borders for L column in signature section
+        for row in range(39, 43):
+            ws[f'L{row}'] = ""
+            ws[f'L{row}'].border = border
+
+        # Second Approval Section
+        ws.merge_cells('A43:C43')
+        ws['A43'] = "Issued By"
+        ws['A43'].alignment = center_alignment
+        ws['A43'].font = regular_font
+        self.apply_border_to_range(ws, 'A43', 'C43')
+
+        ws.merge_cells('D43:G43')
+        ws['D43'] = "Reviewed By"
+        ws['D43'].alignment = center_alignment
+        ws['D43'].font = regular_font
+        self.apply_border_to_range(ws, 'D43', 'G43')
+
+        ws.merge_cells('H43:J43')
+        ws['H43'] = "Approved By"
+        ws['H43'].alignment = center_alignment
+        ws['H43'].font = regular_font
+        self.apply_border_to_range(ws, 'H43', 'J43')
+
+        ws['K43'] = ""
+        ws['K43'].border = border
+        ws['L43'] = ""
+        ws['L43'].border = border
+
+        # Second signature boxes (rows 44-47)
+        ws.merge_cells('A44:C47')
+        ws['A44'] = ""
+        self.apply_border_to_range(ws, 'A44', 'C47')
+
+        ws.merge_cells('D44:G47')
+        ws['D44'] = ""
+        self.apply_border_to_range(ws, 'D44', 'G47')
+
+        ws.merge_cells('H44:J47')
+        ws['H44'] = ""
+        self.apply_border_to_range(ws, 'H44', 'J47')
+
+        # Apply borders for K and L columns in second signature section
+        for row in range(44, 48):
+            ws[f'K{row}'] = ""
+            ws[f'K{row}'].border = border
+            ws[f'L{row}'] = ""
+            ws[f'L{row}'].border = border
+
+        # Final rows (48-50) - empty with borders
+        for row in range(48, 51):
+            for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']:
+                ws[f'{col}{row}'] = ""
+                ws[f'{col}{row}'].border = border
+
+        # Return the workbook
         return wb
-
-    def populate_template_with_data(self, wb, form_data, images_data=None):
-        """Populate the template with form data and images"""
+    
+    def populate_template_with_data(self, wb, data_dict):
+        """Populate the template with data from dictionary"""
         ws = wb.active
         
-        # Populate form data
-        if form_data.get('Vendor Code'):
-            ws['B5'] = form_data['Vendor Code']
-        if form_data.get('Vendor Name'):
-            ws['B6'] = form_data['Vendor Name']
-        if form_data.get('Vendor Location'):
-            ws['B7'] = form_data['Vendor Location']
-            
-        # Part information
-        if form_data.get('Part No.'):
-            ws['G5'] = form_data['Part No.']
-        if form_data.get('Part Description'):
-            ws['G6'] = form_data['Part Description']
-        if form_data.get('Part Unit Weight'):
-            weight_unit = form_data.get('Part Weight Unit', '')
-            ws['G7'] = f"{form_data['Part Unit Weight']} {weight_unit}"
-            
-        # Part dimensions
-        if form_data.get('Part L'):
-            ws['G8'] = form_data['Part L']
-        if form_data.get('Part W'):
-            ws['I8'] = form_data['Part W']
-        if form_data.get('Part H'):
-            ws['K8'] = form_data['Part H']
-            
-        # Primary packaging
-        if form_data.get('Primary Packaging Type'):
-            ws['A11'] = form_data['Primary Packaging Type']
-        if form_data.get('Primary L-mm'):
-            ws['B11'] = form_data['Primary L-mm']
-        if form_data.get('Primary W-mm'):
-            ws['C11'] = form_data['Primary W-mm']
-        if form_data.get('Primary H-mm'):
-            ws['D11'] = form_data['Primary H-mm']
-        if form_data.get('Primary Qty/Pack'):
-            ws['E11'] = form_data['Primary Qty/Pack']
-        if form_data.get('Primary Empty Weight'):
-            ws['F11'] = form_data['Primary Empty Weight']
-        if form_data.get('Primary Pack Weight'):
-            ws['G11'] = form_data['Primary Pack Weight']
-            
-        # Secondary packaging
-        if form_data.get('Secondary Packaging Type'):
-            ws['A16'] = form_data['Secondary Packaging Type']
-        if form_data.get('Secondary L-mm'):
-            ws['B16'] = form_data['Secondary L-mm']
-        if form_data.get('Secondary W-mm'):
-            ws['C16'] = form_data['Secondary W-mm']
-        if form_data.get('Secondary H-mm'):
-            ws['D16'] = form_data['Secondary H-mm']
-        if form_data.get('Secondary Qty/Pack'):
-            ws['E16'] = form_data['Secondary Qty/Pack']
-        if form_data.get('Secondary Empty Weight'):
-            ws['F16'] = form_data['Secondary Empty Weight']
-        if form_data.get('Secondary Pack Weight'):
-            ws['G16'] = form_data['Secondary Pack Weight']
-            
-        # Procedure steps
-        for i in range(1, 11):
-            step_key = f'Procedure Step {i}'
-            if form_data.get(step_key):
-                row = 19 + i
-                ws[f'B{row}'] = form_data[step_key]
-                
-        # Approval fields
-        if form_data.get('Issued By'):
-            ws['B39'] = f"Name & Sign: {form_data['Issued By']}"
-        if form_data.get('Reviewed By'):
-            ws['B40'] = f"Name & Sign: {form_data['Reviewed By']}"
-        if form_data.get('Approved By'):
-            ws['B41'] = f"Name & Sign: {form_data['Approved By']}"
-            
-        # Add date if provided
-        if form_data.get('Date'):
-            ws['G2'] = form_data['Date']
-            
-        # Problem and Caution fields
-        if form_data.get('Problem If Any'):
-            ws['L12'] = form_data['Problem If Any']
-        if form_data.get('Caution'):
-            ws['L13'] = form_data['Caution']
-            
-        # Add images if provided
-        if images_data:
-            # Current Packaging image (L2:L8 area)
-            if images_data.get('Current Packaging'):
-                self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L2', 'L8')
-                
-            # Primary Packaging image (A32:C37)
-            if images_data.get('Primary Packaging'):
-                self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A32', 'C37')
-                
-            # Secondary Packaging image (D32:G37)
-            if images_data.get('Secondary Packaging'):
-                self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'D32', 'G37')
-                
-            # Label image (H32:J37)
-            if images_data.get('Label'):
-                self.add_image_to_cell_range(ws, images_data['Label'], 'H32', 'J37')
-                
+        # Map data to specific cells
+        cell_mapping = {
+            'Revision No.': 'B2',
+            'Date': 'G2',
+            'Vendor Code': 'B5',
+            'Vendor Name': 'B6',
+            'Vendor Location': 'B7',
+            'Part No.': 'G5',
+            'Part Description': 'G6',
+            'Part Unit Weight': 'G7',
+            'Part L': 'G8',
+            'Part W': 'I8',
+            'Part H': 'K8',
+            'Primary Packaging Type': 'A11',
+            'Primary L-mm': 'B11',
+            'Primary W-mm': 'C11',
+            'Primary H-mm': 'D11',
+            'Primary Qty/Pack': 'E11',
+            'Primary Empty Weight': 'F11',
+            'Primary Pack Weight': 'G11',
+            'Secondary Packaging Type': 'A16',
+            'Secondary L-mm': 'B16',
+            'Secondary W-mm': 'C16',
+            'Secondary H-mm': 'D16',
+            'Secondary Qty/Pack': 'E16',
+            'Secondary Empty Weight': 'F16',
+            'Secondary Pack Weight': 'G16',
+            'Problem If Any': 'L12',
+        }
+        
+        # Populate cells with data
+        for field, cell in cell_mapping.items():
+            if field in data_dict and data_dict[field]:
+                ws[cell] = data_dict[field]
+        
         return wb
-
 
 def main():
     st.set_page_config(page_title="Exact Packaging Template Generator", layout="wide")
