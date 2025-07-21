@@ -882,7 +882,7 @@ class ExactPackagingTemplateManager:
         ws['D44'] = ""
         self.apply_border_to_range(ws, 'D44', 'G47')
 
-        ws.merge_cells('H44:J47')
+        ws.merge_cells('H44:K47')
         ws['H44'] = ""
         self.apply_border_to_range(ws, 'H44', 'K47')
 
