@@ -650,12 +650,6 @@ class ExactPackagingTemplateManager:
         ws['A9'].alignment = center_alignment
         self.apply_border_to_range(ws, 'A9', 'K9')
 
-        ws['L15'] = "CURRENT PACKAGING"
-        ws['L15'].fill = blue_fill
-        ws['L15'].font = white_font
-        ws['L15'].border = border
-        ws['L15'].alignment = center_alignment
-
         # Primary packaging headers
         headers = ["Packaging Type", "L-mm", "W-mm", "H-mm", "Qty/Pack", "Empty Weight", "Pack Weight"]
         for i, header in enumerate(headers):
@@ -925,11 +919,11 @@ class ExactPackagingTemplateManager:
             'Secondary Qty/Pack': 'E16',
             'Secondary Empty Weight': 'F16',
             'Secondary Pack Weight': 'G16',
-            'Problem If Any': 'L12',
+            'Problem If Any': 'L16',
             'Issued By': 'A39',  # You might want to add signature fields
             'Reviewed By': 'D39',
             'Approved By': 'H39',
-            'Caution': 'L11'  # Maps to the caution field
+            'Caution': 'L17'  # Maps to the caution field
         }
         # Populate cells with data
         # Populate cells with data
