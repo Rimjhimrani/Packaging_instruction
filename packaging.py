@@ -849,11 +849,6 @@ class ExactPackagingTemplateManager:
         ws['H39'] = ""
         self.apply_border_to_range(ws, 'H39', 'K42')
 
-        # Apply borders for L column in signature section
-        for row in range(39, 43):
-            ws[f'L{row}'] = ""
-            ws[f'L{row}'].border = border
-
         # Second Approval Section
         ws.merge_cells('A43:C43')
         ws['A43'] = "Issued By"
