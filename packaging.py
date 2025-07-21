@@ -643,11 +643,11 @@ class ExactPackagingTemplateManager:
             # Define specific dimensions for known cell ranges in your template
             cell_range_dimensions = {
                 # Primary Packaging area (A32:C37) - 3 cols x 6 rows
-                'A32:C37': {'width': 210, 'height': 96},  # 3*12*7*0.9 x 6*16*1.33*0.9
+                'A33:C38': {'width': 210, 'height': 96},  # 3*12*7*0.9 x 6*16*1.33*0.9
                 # Secondary Packaging area (E32:F37) - 2 cols x 6 rows  
-                'E32:F37': {'width': 162, 'height': 96},   # 2*12*7*0.9 x 6*16*1.33*0.9
+                'E33:F38': {'width': 162, 'height': 96},   # 2*12*7*0.9 x 6*16*1.33*0.9
                 # Label area (H32:K37) - 4 cols x 6 rows
-                'H32:K37': {'width': 380, 'height': 96},   # 4*12*7*0.9 x 6*16*1.33*0.9
+                'H33:K38': {'width': 380, 'height': 96},   # 4*12*7*0.9 x 6*16*1.33*0.9
                 # Current Packaging area (L2:L8) - 1 col x 7 rows (tall)
                 'L2:L16': {'width': 380, 'height': 149},    # 30*7*0.9 x 7*16*1.33*0.9
             }
