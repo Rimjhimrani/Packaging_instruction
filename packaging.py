@@ -243,7 +243,7 @@ class ExactPackagingTemplateManager:
             return {}
     
     def extract_images_from_excel(self, uploaded_file):
-        """Extract images from Excel file with enhanced debugging"""
+        """Extract images from Excel file based on column headers and row positions"""
         images_data = {
             'Current Packaging': None,
             'Primary Packaging': None,
@@ -256,323 +256,138 @@ class ExactPackagingTemplateManager:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
                 tmp_file.write(uploaded_file.getvalue())
                 tmp_file_path = tmp_file.name
-            
+        
             # Load workbook and extract images
             wb = load_workbook(tmp_file_path)
             ws = wb.active
 
-            # Enhanced header detection - check more rows and be more flexible
+            # Find header positions (search in first few rows)
             header_positions = {}
-            st.write("🔍 **Searching for headers...**")
-
-            # Search for headers in the worksheet (check more rows)
-            for row_idx in range(1, 15):  # Check first 15 rows for headers
+            header_row = None
+        
+            # Search for headers in the first 10 rows
+            for row_idx in range(1, 11):
+                row_headers_found = 0
+                temp_positions = {}
+            
                 for col_idx in range(1, ws.max_column + 1):
                     try:
                         cell_value = ws.cell(row=row_idx, column=col_idx).value
                         if cell_value:
                             cell_value = str(cell_value).strip().lower()
-                            st.write(f"Row {row_idx}, Col {col_idx}: '{cell_value}'")
-                            
+                        
                             # More flexible header matching
                             if any(keyword in cell_value for keyword in ["current packaging", "current pack"]):
-                                header_positions['Current Packaging'] = col_idx - 1  # Convert to 0-based
-                                st.success(f"✅ Found 'Current Packaging' at column {col_idx}")
+                                temp_positions['Current Packaging'] = col_idx - 1  # Convert to 0-based
+                                row_headers_found += 1
                             elif any(keyword in cell_value for keyword in ["primary packaging", "primary pack"]):
-                                header_positions['Primary Packaging'] = col_idx - 1
-                                st.success(f"✅ Found 'Primary Packaging' at column {col_idx}")
+                                temp_positions['Primary Packaging'] = col_idx - 1
+                                row_headers_found += 1
                             elif any(keyword in cell_value for keyword in ["secondary packaging", "secondary pack"]):
-                                header_positions['Secondary Packaging'] = col_idx - 1
-                                st.success(f"✅ Found 'Secondary Packaging' at column {col_idx}")
+                                temp_positions['Secondary Packaging'] = col_idx - 1
+                                row_headers_found += 1
                             elif "label" in cell_value:
-                                header_positions['Label'] = col_idx - 1
-                                st.success(f"✅ Found 'Label' at column {col_idx}")
+                                temp_positions['Label'] = col_idx - 1
+                                row_headers_found += 1
                     except Exception:
                         continue
-            
-            st.info(f"📍 **Final header positions:** {header_positions}")
-
-            # Debug: Print worksheet information
-            st.write(f"📋 **Worksheet info:**")
-            st.write(f"- Max row: {ws.max_row}")
-            st.write(f"- Max column: {ws.max_column}")
-            
-            # Check for images
-            total_images = 0
-            if hasattr(ws, '_images'):
-                total_images = len(ws._images)
-            
-            st.write(f"🖼️ **Found {total_images} images in the worksheet**")
-
-            # Try multiple methods to extract images
-            images_found = []
-            
-            # Method 1: Standard _images approach
+                # If we found multiple headers in this row, it's likely the header row
+                if row_headers_found >= 2:
+                    header_positions = temp_positions
+                    header_row = row_idx
+                    break
+            if not header_positions:
+                st.warning("⚠️ Could not find column headers in the Excel file")
+                return images_data
+            # Process images if they exist
             if hasattr(ws, '_images') and ws._images:
-                st.write("🔄 **Method 1: Processing _images...**")
                 for idx, img in enumerate(ws._images):
-                    images_found.append(('_images', idx, img))
-            
-            # Method 2: Try through drawings
-            try:
-                if hasattr(ws, 'drawing') and ws.drawing:
-                    st.write("🔄 **Method 2: Processing through drawings...**")
-                    # This is an alternative way to access images
-            except Exception as draw_error:
-                st.write(f"Method 2 failed: {draw_error}")
-                
-            # Method 3: Direct from workbook parts
-            try:
-                st.write("🔄 **Method 3: Checking workbook parts...**")
-                for rel_id, rel in wb._rels.items():
-                    if 'image' in str(rel.target).lower():
-                        st.write(f"Found image relationship: {rel_id} -> {rel.target}")
-            except Exception as parts_error:
-                st.write(f"Method 3 failed: {parts_error}")
-            
-            st.write(f"Total images found: {len(images_found)}")
-            
-            # Process found images
-            if images_found:
-                st.write("🔄 **Processing found images...**")
-                for method, idx, img in images_found:
                     try:
-                        st.write(f"\n--- Processing Image {idx+1} ({method}) ---")
-                        
                         # Convert image to PIL Image
                         image_stream = io.BytesIO(img._data())
                         pil_image = PILImage.open(image_stream)
-                        st.write(f"Image size: {pil_image.size}")
-                
-                        # Get anchor information
+                    
+                        # Get anchor position
                         anchor = img.anchor
                         col_idx = None
                         row_idx = None
-                        
-                        st.write(f"Anchor type: {type(anchor)}")
-                
-                        # Try different ways to get position
+                    
+                        # Get position from anchor
                         if hasattr(anchor, '_from') and anchor._from:
-                            col_idx = anchor._from.col
-                            row_idx = anchor._from.row
-                            st.write(f"Method 1 - _from: col={col_idx}, row={row_idx}")
+                            col_idx = anchor._from.col  # 0-based
+                            row_idx = anchor._from.row + 1  # Convert to 1-based for comparison
                         elif hasattr(anchor, 'col') and hasattr(anchor, 'row'):
                             col_idx = anchor.col
-                            row_idx = anchor.row
-                            st.write(f"Method 2 - direct: col={col_idx}, row={row_idx}")
-                        
-                        # Try to get cell reference if available
-                        if hasattr(anchor, '_from') and hasattr(anchor._from, 'col_off'):
-                            st.write(f"Column offset: {anchor._from.col_off}")
-                            st.write(f"Row offset: {anchor._from.row_off}")
-                    
-                        if col_idx is not None:
-                            st.write(f"✅ Image {idx+1}: Located at column {col_idx}, row {row_idx}")
+                            row_idx = anchor.row + 1
+                        if col_idx is not None and row_idx is not None:
+                            # Only consider images that are BELOW the header row
+                            if header_row and row_idx > header_row:
+                                # Find the closest matching header column
+                                best_match = None
+                                min_distance = float('inf')
                             
-                            # Map image to correct category based on header positions
-                            assigned = False
-                            best_match = None
-                            min_distance = float('inf')
-                    
-                            for category, expected_col in header_positions.items():
-                                distance = abs(col_idx - expected_col)
-                                st.write(f"Distance to {category} (col {expected_col}): {distance}")
-                                
-                                if distance < min_distance:
-                                    min_distance = distance
-                                    best_match = category
-                            
-                            # Assign to best match if within reasonable distance
-                            if best_match and min_distance <= 2:  # Allow up to 2 columns difference
-                                images_data[best_match] = pil_image
-                                st.success(f"✅ Assigned to {best_match} (distance: {min_distance})")
-                                assigned = True
-                            else:
-                                st.warning(f"⚠️ No close match found. Best was {best_match} with distance {min_distance}")
-                            
-                            if not assigned:
-                                st.warning(f"⚠️ Image {idx+1} found at unexpected location: col {col_idx}, row {row_idx}")
-                                # Fallback: assign based on position order
-                                if col_idx < 10:  # Rough guess for leftmost columns
-                                    if not images_data['Current Packaging']:
+                                for category, expected_col in header_positions.items():
+                                    distance = abs(col_idx - expected_col)
+                                    if distance < min_distance:
+                                        min_distance = distance
+                                        best_match = category
+                                # Assign to best match if within reasonable distance (allow 1-2 column difference)
+                                if best_match and min_distance <= 2:
+                                    # Special handling: Current and Primary packaging should have same image
+                                    if best_match == 'Current Packaging':
                                         images_data['Current Packaging'] = pil_image
-                                        st.info("Assigned to Current Packaging (fallback - leftmost)")
-                                        assigned = True
-                                elif not images_data['Primary Packaging']:
-                                    images_data['Primary Packaging'] = pil_image
-                                    st.info("Assigned to Primary Packaging (fallback)")
-                                    assigned = True
-                                elif not images_data['Secondary Packaging']:
-                                    images_data['Secondary Packaging'] = pil_image
-                                    st.info("Assigned to Secondary Packaging (fallback)")
-                                    assigned = True
-                                elif not images_data['Label']:
-                                    images_data['Label'] = pil_image
-                                    st.info("Assigned to Label (fallback)")
-                                    assigned = True
-                        else:
-                            st.warning(f"❌ Could not determine location for image {idx+1}")
-                            # Try alternative methods to get image position
-                            st.write("Trying alternative position detection...")
-                            
-                            # Final fallback: assign to first empty slot
-                            for category in ['Current Packaging', 'Primary Packaging', 'Secondary Packaging', 'Label']:
-                                if not images_data[category]:
-                                    images_data[category] = pil_image
-                                    st.info(f"Assigned to {category} (final fallback)")
-                                    break
-                            
+                                        # Also assign to Primary Packaging if it doesn't have an image yet
+                                        if not images_data['Primary Packaging']:
+                                            images_data['Primary Packaging'] = pil_image
+                                    elif best_match == 'Primary Packaging':
+                                        images_data['Primary Packaging'] = pil_image
+                                        # Also assign to Current Packaging if it doesn't have an image yet
+                                        if not images_data['Current Packaging']:
+                                            images_data['Current Packaging'] = pil_image
+                                    else:
+                                        # For Secondary Packaging and Label, assign normally
+                                        images_data[best_match] = pil_image
+                                else:
+                                    # Fallback: assign based on column order
+                                    sorted_headers = sorted(header_positions.items(), key=lambda x: x[1])
+                                    if len(sorted_headers) > 0:
+                                        # Find which header this image is closest to
+                                        for i, (category, _) in enumerate(sorted_headers):
+                                            if not images_data[category]:
+                                                images_data[category] = pil_image
+                                                break
                     except Exception as img_error:
-                        st.error(f"❌ Error processing image {idx+1}: {str(img_error)}")
-                        import traceback
-                        st.code(traceback.format_exc())
+                        # Silently continue if there's an error with an individual image
                         continue
-            else:
-                st.warning("⚠️ No images found in the worksheet.")
-                
-                # Try alternative approach - check for drawing parts
-                try:
-                    # This might help find images stored differently
-                    if hasattr(ws, 'drawing') and ws.drawing:
-                        st.write("Found drawing object, trying to extract images...")
-                        st.write(f"Drawing type: {type(ws.drawing)}")
-                        
-                    # Try to access workbook drawings directly
-                    for part_name, part in wb._rels.items():
-                        st.write(f"Workbook part: {part_name} -> {part}")
-                        
-                except Exception as alt_error:
-                    st.write(f"Alternative method failed: {alt_error}")
-                
-            # Show final results
-            st.write("\n🎯 **Final image assignments:**")
-            for category, image in images_data.items():
-                if image:
-                    st.success(f"✅ {category}: Image assigned ({image.size})")
-                else:
-                    st.warning(f"❌ {category}: No image found")
-            
+            # If Current and Primary are still empty but we have images, try a simpler approach
+            if not any(images_data.values()) and hasattr(ws, '_images') and ws._images:
+                # Simple fallback: assign first few images to categories in order
+                categories = ['Current Packaging', 'Primary Packaging', 'Secondary Packaging', 'Label']
+                for idx, img in enumerate(ws._images[:len(categories)]):
+                    try:
+                        image_stream = io.BytesIO(img._data())
+                        pil_image = PILImage.open(image_stream)
+                    
+                        category = categories[idx]
+                        images_data[category] = pil_image
+                    
+                        # If assigning to Current, also assign to Primary (they should be same)
+                        if category == 'Current Packaging':
+                            images_data['Primary Packaging'] = pil_image
+                        elif category == 'Primary Packaging':
+                            images_data['Current Packaging'] = pil_image
+                    except Exception:
+                        continue
             return images_data
-            
         except Exception as e:
             st.error(f"❌ Could not extract images: {str(e)}")
-            import traceback
-            st.code(traceback.format_exc())
             return images_data
         finally:
             # Clean up temporary file
             if tmp_file_path and os.path.exists(tmp_file_path):
                 try:
                     os.unlink(tmp_file_path)
-                except Exception as cleanup_error:
-                    st.warning(f"Could not clean up temporary file: {str(cleanup_error)}")
-
-    # ADD THIS NEW DEBUG METHOD
-    def debug_excel_file(self, uploaded_file):
-        """Debug script to understand Excel file structure"""
-        tmp_file_path = None
-        
-        try:
-            # Save file temporarily
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
-                tmp_file.write(uploaded_file.getvalue())
-                tmp_file_path = tmp_file.name
-            
-            # Load workbook
-            from openpyxl import load_workbook
-            from openpyxl.utils import get_column_letter
-            wb = load_workbook(tmp_file_path)
-            ws = wb.active
-            
-            st.write("## 🔍 Excel File Debug Information")
-            
-            # 1. Basic worksheet info
-            st.write("### 📊 Worksheet Information")
-            st.write(f"- Worksheet name: {ws.title}")
-            st.write(f"- Max row: {ws.max_row}")  
-            st.write(f"- Max column: {ws.max_column}")
-            st.write(f"- Dimensions: {ws.calculate_dimension()}")
-            
-            # 2. Find all non-empty cells in row 1 (likely headers)
-            st.write("### 📝 Row 1 Content (Headers)")
-            row1_content = {}
-            for col in range(1, ws.max_column + 1):
-                cell_value = ws.cell(row=1, column=col).value
-                if cell_value:
-                    col_letter = get_column_letter(col)
-                    row1_content[col_letter] = str(cell_value).strip()
-                    st.write(f"- {col_letter}1 (col {col}): '{cell_value}'")
-            
-            # 3. Check for images
-            st.write("### 🖼️ Image Analysis")
-            if hasattr(ws, '_images') and ws._images:
-                st.write(f"Found {len(ws._images)} images using _images attribute")
-                
-                for idx, img in enumerate(ws._images):
-                    st.write(f"\n**Image {idx + 1}:**")
-                    
-                    # Image properties
-                    try:
-                        image_data = img._data()
-                        st.write(f"- Data size: {len(image_data)} bytes")
-                        
-                        # Try to get image format/type
-                        image_stream = io.BytesIO(image_data)
-                        pil_image = PILImage.open(image_stream)
-                        st.write(f"- Format: {pil_image.format}")
-                        st.write(f"- Size: {pil_image.size}")
-                        st.write(f"- Mode: {pil_image.mode}")
-                        
-                    except Exception as img_err:
-                        st.write(f"- Error reading image data: {img_err}")
-                    
-                    # Anchor information
-                    st.write("- **Anchor Information:**")
-                    anchor = img.anchor
-                    st.write(f"  - Anchor type: {type(anchor).__name__}")
-                    
-                    # Try to get all possible position info
-                    try:
-                        if hasattr(anchor, '_from'):
-                            from_anchor = anchor._from
-                            st.write("  - _from anchor:")
-                            if hasattr(from_anchor, 'col'):
-                                col_letter = get_column_letter(from_anchor.col + 1)  # openpyxl uses 0-based
-                                st.write(f"    - col: {from_anchor.col} ({col_letter})")
-                            if hasattr(from_anchor, 'row'):
-                                st.write(f"    - row: {from_anchor.row + 1}")  # openpyxl uses 0-based
-                            if hasattr(from_anchor, 'col_off'):
-                                st.write(f"    - col_off: {from_anchor.col_off}")
-                            if hasattr(from_anchor, 'row_off'):
-                                st.write(f"    - row_off: {from_anchor.row_off}")
-                        
-                        if hasattr(anchor, '_to'):
-                            to_anchor = anchor._to
-                            st.write("  - _to anchor:")
-                            if hasattr(to_anchor, 'col'):
-                                col_letter = get_column_letter(to_anchor.col + 1)
-                                st.write(f"    - col: {to_anchor.col} ({col_letter})")
-                            if hasattr(to_anchor, 'row'):
-                                st.write(f"    - row: {to_anchor.row + 1}")
-                                
-                    except Exception as anchor_err:
-                        st.write(f"  - Error reading anchor: {anchor_err}")
-            else:
-                st.write("❌ No images found using _images attribute")
-            
-            return True
-            
-        except Exception as e:
-            st.error(f"Debug failed: {str(e)}")
-            import traceback
-            st.code(traceback.format_exc())
-            return False
-            
-        finally:
-            if tmp_file_path and os.path.exists(tmp_file_path):
-                try:
-                    os.unlink(tmp_file_path)
-                except:
+                except Exception:
                     pass
 
     def apply_border_to_range(self, ws, start_cell, end_cell):
@@ -1421,87 +1236,103 @@ def main():
             help="Upload an existing packaging template to extract and modify data"
         )
         if uploaded_file is not None:
-            st.success("File uploaded successfully!")
-            # ADD THIS DEBUG SECTION FIRST
-            st.subheader("🐛 Debug Information")
-            if st.button("🔍 Debug Excel File Structure", type="secondary"):
-                with st.expander("Debug Results", expanded=True):
-                    template_manager.debug_excel_file(uploaded_file)
-                    # Reset file pointer after debug
-                    uploaded_file.seek(0)
-            st.divider()  # Visual separator
-            # Extract data and images from uploaded file
-            with st.spinner("Extracting data from Excel file..."):
-                extracted_data = template_manager.extract_data_from_excel(uploaded_file)
+           """Clean upload section without debug clutter"""
+    st.header("📁 Upload & Modify Existing Template")
+    
+    uploaded_file = st.file_uploader(
+        "Upload Existing Excel Template",
+        type=['xlsx', 'xls'],
+        help="Upload an existing packaging template to extract and modify data"
+    )
+    
+    if uploaded_file is not None:
+        st.success("File uploaded successfully!")
         
-                # Reset file pointer for image extraction
-                uploaded_file.seek(0)
-                extracted_images = template_manager.extract_images_from_excel(uploaded_file)
-            if extracted_data:
-                st.subheader("📊 Extracted Data")
-                with st.expander("View Extracted Fields", expanded=False):
-                    for key, value in extracted_data.items():
-                        if value:
-                            st.write(f"**{key}**: {value}")
-                # Only show packaging procedure selection
-                st.subheader("📋 Update Packaging Procedures")
-        
-                col1, col2 = st.columns([1, 2])
-        
-                with col1:
-                    st.write("**Select Packaging Type:**")
-                    procedure_type = st.selectbox(
-                        "Packaging Procedure Type",
-                        ["Select", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS"],
-                        help="Select a packaging type to auto-populate procedure steps"
-                    )
-                with col2:
-                    if procedure_type:
-                        st.info(f"Selected: {procedure_type}")
-                        if procedure_type in template_manager.packaging_procedures:
-                            procedures = template_manager.get_procedure_steps(procedure_type)
-                            st.write("**Procedure Steps Preview:**")
-                            for i, step in enumerate(procedures, 1):
-                                if step.strip():
-                                    st.write(f"{i}. {step}")
-                st.subheader("📁 Generate Updated Template")
-        
-                if st.button("🚀 Generate Updated Excel Template", type="primary"):
-                    # Use original extracted data
-                    updated_form_data = extracted_data.copy()
+        # Extract data and images from uploaded file (no debug section)
+        with st.spinner("Extracting data from Excel file..."):
+            extracted_data = template_manager.extract_data_from_excel(uploaded_file)
             
-                    # Update only the procedure steps if a type is selected
-                    if procedure_type and procedure_type in template_manager.packaging_procedures:
-                        procedure_steps = template_manager.get_procedure_steps(procedure_type)
-                        for i, step in enumerate(procedure_steps, 1):
-                            updated_form_data[f'Procedure Step {i}'] = step
-                        # Also update the primary packaging type
-                        updated_form_data['Primary Packaging Type'] = procedure_type
-                        st.success(f"Updated procedures for {procedure_type}")
-                    # Generate Excel file
-                    try:
-                        wb = template_manager.create_exact_template_excel()
-                        # UPDATED LINE: Pass extracted_images as the third parameter
-                        wb = template_manager.populate_template_with_data(wb, updated_form_data, None, extracted_images)
+            # Reset file pointer for image extraction
+            uploaded_file.seek(0)
+            extracted_images = template_manager.extract_images_from_excel(uploaded_file)
+            
+            # Show quick summary of what was extracted (optional)
+            col1, col2 = st.columns(2)
+            with col1:
+                extracted_count = sum(1 for v in extracted_data.values() if v)
+                st.metric("Data Fields Extracted", extracted_count)
+            with col2:
+                images_count = sum(1 for v in extracted_images.values() if v)
+                st.metric("Images Extracted", images_count)
+        
+        if extracted_data:
+            st.subheader("📊 Extracted Data")
+            with st.expander("View Extracted Fields", expanded=False):
+                for key, value in extracted_data.items():
+                    if value:
+                        st.write(f"**{key}**: {value}")
+            
+            # Rest of your existing code for packaging procedures and template generation...
+            st.subheader("📋 Update Packaging Procedures")
+            
+            col1, col2 = st.columns([1, 2])
+            
+            with col1:
+                st.write("**Select Packaging Type:**")
+                procedure_type = st.selectbox(
+                    "Packaging Procedure Type",
+                    ["Select", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS"],
+                    help="Select a packaging type to auto-populate procedure steps"
+                )
+            
+            with col2:
+                if procedure_type:
+                    st.info(f"Selected: {procedure_type}")
+                    if procedure_type in template_manager.packaging_procedures:
+                        procedures = template_manager.get_procedure_steps(procedure_type)
+                        st.write("**Procedure Steps Preview:**")
+                        for i, step in enumerate(procedures, 1):
+                            if step.strip():
+                                st.write(f"{i}. {step}")
+            
+            st.subheader("📁 Generate Updated Template")
+            
+            if st.button("🚀 Generate Updated Excel Template", type="primary"):
+                # Use original extracted data
+                updated_form_data = extracted_data.copy()
                 
-                        # Save to buffer
-                        buffer = io.BytesIO()
-                        wb.save(buffer)
-                        buffer.seek(0)
+                # Update only the procedure steps if a type is selected
+                if procedure_type and procedure_type in template_manager.packaging_procedures:
+                    procedure_steps = template_manager.get_procedure_steps(procedure_type)
+                    for i, step in enumerate(procedure_steps, 1):
+                        updated_form_data[f'Procedure Step {i}'] = step
+                    # Also update the primary packaging type
+                    updated_form_data['Primary Packaging Type'] = procedure_type
+                    st.success(f"Updated procedures for {procedure_type}")
                 
-                        # Provide download
-                        st.success("✅ Updated template generated successfully!")
-                        st.download_button(
-                            label="⬇️ Download Updated Excel Template",
-                            data=buffer.getvalue(),
-                            file_name=f"Updated_Packaging_Template_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
-                    except Exception as e:
-                        st.error(f"Error generating updated template: {str(e)}")
-                        st.write("Debug info:", str(e))
-            else:
-                st.warning("Could not extract data from the uploaded file. Please check the file format and try again.")
+                # Generate Excel file
+                try:
+                    wb = template_manager.create_exact_template_excel()
+                    wb = template_manager.populate_template_with_data(wb, updated_form_data, None, extracted_images)
+                    
+                    # Save to buffer
+                    buffer = io.BytesIO()
+                    wb.save(buffer)
+                    buffer.seek(0)
+                    
+                    # Provide download
+                    st.success("✅ Updated template generated successfully!")
+                    st.download_button(
+                        label="⬇️ Download Updated Excel Template",
+                        data=buffer.getvalue(),
+                        file_name=f"Updated_Packaging_Template_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                except Exception as e:
+                    st.error(f"Error generating updated template: {str(e)}")
+        else:
+            st.warning("Could not extract data from the uploaded file. Please check the file format and try again.")
+
 
 if __name__ == "__main__":
     main()
