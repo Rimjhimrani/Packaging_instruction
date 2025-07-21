@@ -60,6 +60,7 @@ class ExactPackagingTemplateManager:
             'Procedure Step 8': '',
             'Procedure Step 9': '',
             'Procedure Step 10': '',
+            'Procedure Step 11': '',
             
             # Approval
             'Issued By': '',
@@ -983,7 +984,7 @@ class ExactPackagingTemplateManager:
         ws['L19'] = ""
         ws['L19'].border = border
 
-        # Packaging procedure steps (rows 20-29) - WITH MERGED CELLS
+        # Packaging procedure steps (rows 20-30) - WITH MERGED CELLS
         for i in range(1, 11):
             row = 19 + i
             ws[f'A{row}'] = str(i)
@@ -1434,6 +1435,7 @@ def main():
                     'Procedure Step 8': step8,
                     'Procedure Step 9': step9,
                     'Procedure Step 10': step10,
+                    'Procedure Step 11': step11,
                     'Issued By': issued_by,
                     'Reviewed By': reviewed_by,
                     'Approved By': approved_by,
