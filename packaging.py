@@ -407,33 +407,193 @@ class ExactPackagingTemplateManager:
                 cell.border = border
     
     def add_image_to_cell_range(self, ws, pil_image, start_cell, end_cell):
-        """Add PIL image to specified cell range in worksheet"""
+        """Add PIL image to specified cell range in worksheet with proper sizing"""
         try:
             # Convert PIL image to bytes
             img_buffer = io.BytesIO()
             pil_image.save(img_buffer, format='PNG')
             img_buffer.seek(0)
-            
+        
             # Create openpyxl Image
             img = Image(img_buffer)
-            
-            # Calculate cell dimensions (approximate)
+        
+            # Parse cell coordinates
             start_col_letter = start_cell[0]
             start_row = int(start_cell[1:])
             end_col_letter = end_cell[0]
             end_row = int(end_cell[1:])
-            
-            # Estimate size based on merged cell area (adjust as needed)
-            img.width = 120  # Adjust based on your needs
-            img.height = 80  # Adjust based on your needs
-            
+        
+            # Convert column letters to numbers
+            start_col_num = ord(start_col_letter.upper()) - ord('A') + 1
+            end_col_num = ord(end_col_letter.upper()) - ord('A') + 1
+        
+            # Calculate total width and height based on cell dimensions
+            total_width = 0
+            for col_num in range(start_col_num, end_col_num + 1):
+                col_letter = chr(ord('A') + col_num - 1)
+                # Get column width (default Excel column width is ~8.43 characters = ~64 pixels)
+                col_width = ws.column_dimensions[col_letter].width or 12  # Default to 12 if not set
+                # Convert Excel column width to pixels (approximate: 1 character ≈ 7.5 pixels)
+                total_width += col_width * 7.5
+            total_height = 0
+            for row_num in range(start_row, end_row + 1):
+                # Get row height (Excel default is ~15 points = ~20 pixels)
+                row_height = ws.row_dimensions[row_num].height or 16  # Default to 16 if not set
+                # Convert points to pixels (1 point ≈ 1.33 pixels)
+                total_height += row_height * 1.33
+        
+            # Add some padding (reduce by 10% to ensure it fits within borders)
+            total_width *= 0.9
+            total_height *= 0.9
+        
+            # Maintain aspect ratio while fitting within the cell range
+            original_width, original_height = pil_image.size
+            aspect_ratio = original_width / original_height
+        
+            # Calculate scaling factors
+            width_scale = total_width / original_width
+            height_scale = total_height / original_height
+        
+            # Use the smaller scale to maintain aspect ratio and fit within bounds
+            scale = min(width_scale, height_scale)
+        
+            # Apply the scaling
+            img.width = int(original_width * scale)
+            img.height = int(original_height * scale)
+        
+            # Add image to worksheet at the start cell
+            ws.add_image(img, start_cell)
+        
+            print(f"Image added to {start_cell}:{end_cell} with dimensions {img.width}x{img.height}")
+            return True
+        
+        except Exception as e:
+            print(f"Error adding image to cell range {start_cell}:{end_cell}: {e}")
+            return False
+
+
+    # Alternative method with more precise cell dimension calculation
+    def add_image_to_cell_range_precise(self, ws, pil_image, start_cell, end_cell):
+        """Add PIL image to specified cell range with more precise dimension calculation"""
+        try:
+            from openpyxl.utils import column_index_from_string, get_column_letter
+        
+            # Convert PIL image to bytes
+            img_buffer = io.BytesIO()
+            pil_image.save(img_buffer, format='PNG')
+            img_buffer.seek(0)
+        
+            # Create openpyxl Image
+            img = Image(img_buffer)
+        
+            # Parse cell coordinates more precisely
+            start_col_idx = column_index_from_string(start_cell.split(start_cell.lstrip('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))[0])
+            start_row = int(start_cell.lstrip('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
+            end_col_idx = column_index_from_string(end_cell.split(end_cell.lstrip('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))[0])
+            end_row = int(end_cell.lstrip('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
+        
+            # Calculate total dimensions more precisely
+            total_width_chars = 0
+            for col_idx in range(start_col_idx, end_col_idx + 1):
+                col_letter = get_column_letter(col_idx)
+                col_width = ws.column_dimensions[col_letter].width or 8.43  # Excel default
+                total_width_chars += col_width
+        
+            total_height_points = 0
+            for row_num in range(start_row, end_row + 1):
+                row_height = ws.row_dimensions[row_num].height or 15  # Excel default
+                total_height_points += row_height
+        
+            # Convert to pixels (more accurate conversion)
+            # 1 character width ≈ 7 pixels, 1 point ≈ 1.333 pixels
+            total_width_pixels = total_width_chars * 7 * 0.9  # 10% padding
+            total_height_pixels = total_height_points * 1.333 * 0.9  # 10% padding
+        
+            # Maintain aspect ratio
+            original_width, original_height = pil_image.size
+        
+            # Calculate scaling to fit within the cell range
+            width_ratio = total_width_pixels / original_width
+            height_ratio = total_height_pixels / original_height
+            scale_ratio = min(width_ratio, height_ratio)
+        
+            # Apply scaling
+            img.width = int(original_width * scale_ratio)
+            img.height = int(original_height * scale_ratio)
+        
             # Add image to worksheet
             ws.add_image(img, start_cell)
-            
+        
+            print(f"Precise image sizing: {start_cell}:{end_cell} -> {img.width}x{img.height}px")
+            print(f"Cell range: {total_width_chars:.1f} chars x {total_height_points:.1f} pts")
+        
             return True
-            
+        
         except Exception as e:
-            st.warning(f"Could not add image to worksheet: {str(e)}")
+            print(f"Error in precise image placement: {e}")
+            # Fallback to simpler method
+            return self.add_image_to_cell_range(ws, pil_image, start_cell, end_cell)
+
+
+    # Enhanced method with specific handling for your template's cell ranges
+    def add_image_to_template_cell_range(self, ws, pil_image, start_cell, end_cell):
+        """Optimized for the specific cell ranges in your packaging template"""
+        try:
+            # Convert PIL image to bytes
+            img_buffer = io.BytesIO()
+            pil_image.save(img_buffer, format='PNG')
+            img_buffer.seek(0)
+        
+            # Create openpyxl Image
+            img = Image(img_buffer)
+        
+            # Define specific dimensions for known cell ranges in your template
+            cell_range_dimensions = {
+                # Primary Packaging area (A32:C37) - 3 cols x 6 rows
+                'A32:C37': {'width': 210, 'height': 96},  # 3*12*7*0.9 x 6*16*1.33*0.9
+                # Secondary Packaging area (E32:F37) - 2 cols x 6 rows  
+                'E32:F37': {'width': 162, 'height': 96},   # 2*12*7*0.9 x 6*16*1.33*0.9
+                # Label area (H32:K37) - 4 cols x 6 rows
+                'H32:K37': {'width': 302, 'height': 96},   # 4*12*7*0.9 x 6*16*1.33*0.9
+                # Current Packaging area (L2:L8) - 1 col x 7 rows (tall)
+                'L2:L8': {'width': 226, 'height': 149},    # 30*7*0.9 x 7*16*1.33*0.9
+            }
+        
+            # Create cell range key
+            range_key = f"{start_cell}:{end_cell}"
+        
+            if range_key in cell_range_dimensions:
+                # Use predefined dimensions
+                target_width = cell_range_dimensions[range_key]['width']
+                target_height = cell_range_dimensions[range_key]['height']
+            else:
+                # Fallback to calculation
+                print(f"Unknown cell range {range_key}, calculating dimensions...")
+                return self.add_image_to_cell_range(ws, pil_image, start_cell, end_cell)
+        
+            # Maintain aspect ratio while fitting within target dimensions
+            original_width, original_height = pil_image.size
+        
+            # Calculate scaling factors
+            width_scale = target_width / original_width
+            height_scale = target_height / original_height
+        
+            # Use the smaller scale to maintain aspect ratio
+            scale = min(width_scale, height_scale)
+        
+            # Apply the scaling
+            img.width = int(original_width * scale)
+            img.height = int(original_height * scale)
+        
+            # Add image to worksheet
+            ws.add_image(img, start_cell)
+        
+            print(f"Template image added: {range_key} -> {img.width}x{img.height}px (scale: {scale:.2f})")
+        
+            return True
+        
+        except Exception as e:
+            print(f"Error adding template image to {start_cell}:{end_cell}: {e}")
             return False
 
     def create_exact_template_excel(self):
