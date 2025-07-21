@@ -941,19 +941,27 @@ class ExactPackagingTemplateManager:
             'Secondary Empty Weight': 'F16',
             'Secondary Pack Weight': 'G16',
             'Problem If Any': 'L12',
+            'Issued By': 'A39',  # You might want to add signature fields
+            'Reviewed By': 'D39',
+            'Approved By': 'H39',
+            'Caution': 'L11'  # Maps to the caution field
         }
-        
         # Populate cells with data
         for field, cell in cell_mapping.items():
             if field in data_dict and data_dict[field]:
                 ws[cell] = data_dict[field]
-        
-        # Populate procedures if provided
+        # Handle procedure steps from data_dict
+        for i in range(1, 11):  # Max 10 procedures
+            procedure_key = f'Procedure Step {i}'
+            if procedure_key in data_dict and data_dict[procedure_key]:
+                row = 19 + i  # Procedure rows start from 20
+                ws[f'B{row}'] = data_dict[procedure_key]
+        # Populate procedures if provided as separate list
         if procedures_list:
             for i, procedure in enumerate(procedures_list[:10]):  # Max 10 procedures
-                row = 20 + i  # Procedure rows start from 20
-                ws[f'B{row}'] = procedure
-        
+                if procedure:  # Only add non-empty procedures
+                    row = 20 + i  # Procedure rows start from 20
+                    ws[f'B{row}'] = procedure
         return wb
 
 def main():
