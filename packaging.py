@@ -911,9 +911,8 @@ class ExactPackagingTemplateManager:
         return wb
     
     def populate_template_with_data(self, wb, data_dict):
-       """Populate the template with data from dictionary and optional procedures"""
+        """Populate the template with data from dictionary and optional procedures"""
         ws = wb.active
-        
         # Map data to specific cells
         cell_mapping = {
             'Revision No.': 'B2',
