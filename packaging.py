@@ -186,7 +186,7 @@ class ExactPackagingTemplateManager:
             ]
         }
     
-    def get_procedure_steps(self, packaging_type):
+    def get_procedure_steps(self, packaging_type, data_dict=None):
         """Get predefined procedure steps for selected packaging type with placeholders filled"""
         procedures = self.packaging_procedures.get(packaging_type, [""] * 11)
         
