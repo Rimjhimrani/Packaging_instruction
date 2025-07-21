@@ -999,140 +999,137 @@ class ExactPackagingTemplateManager:
             self.apply_border_to_range(ws, f'B{row}', f'K{row}')
 
         # Reference Images/Pictures section
-        ws.merge_cells('A30:K30')
-        ws['A30'] = "Reference Images/Pictures"
-        ws['A30'].fill = blue_fill
-        ws['A30'].font = white_font
-        ws['A30'].alignment = center_alignment
-        self.apply_border_to_range(ws, 'A30', 'K30')
+        ws.merge_cells('A31:K31')
+        ws['A31'] = "Reference Images/Pictures"
+        ws['A31'].fill = blue_fill
+        ws['A31'].font = white_font
+        ws['A31'].alignment = center_alignment
+        self.apply_border_to_range(ws, 'A31', 'K31')
 
         # Image section headers
-        ws.merge_cells('A31:C31')
-        ws['A31'] = "Primary Packaging"
-        ws['A31'].alignment = center_alignment
-        ws['A31'].font = regular_font
-        self.apply_border_to_range(ws, 'A31', 'C31')
-
-        ws.merge_cells('D31:G31')
-        ws['D31'] = "Secondary Packaging"
-        ws['D31'].alignment = center_alignment
-        ws['D31'].font = regular_font
-        self.apply_border_to_range(ws, 'D31', 'G31')
-
-        ws.merge_cells('H31:K31')
-        ws['H31'] = "Label"
-        ws['H31'].alignment = center_alignment
-        ws['H31'].font = regular_font
-        self.apply_border_to_range(ws, 'H31', 'K31')
-
-        # Image placeholder areas (rows 32-37)
-        ws.merge_cells('A32:C37')
-        ws['A32'] = "Primary\nPackaging"
+        ws.merge_cells('A32:C32')
+        ws['A32'] = "Primary Packaging"
         ws['A32'].alignment = center_alignment
         ws['A32'].font = regular_font
-        self.apply_border_to_range(ws, 'A32', 'C37')
+        self.apply_border_to_range(ws, 'A32', 'C32')
 
-        # Arrow 1
-        ws['D35'] = "→"
-        ws['D35'].border = border
-        ws['D35'].alignment = center_alignment
-        ws['D35'].font = Font(size=20, bold=True)
+        ws.merge_cells('D32:G32')
+        ws['D32'] = "Secondary Packaging"
+        ws['D32'].alignment = center_alignment
+        ws['D32'].font = regular_font
+        self.apply_border_to_range(ws, 'D32', 'G32')
 
-        # Secondary Packaging image area
-        ws.merge_cells('E32:F37')
-        ws['E32'] = "SECONDARY\nPACKAGING"
-        ws['E32'].alignment = center_alignment
-        ws['E32'].font = regular_font
-        ws['E32'].fill = light_blue_fill
-        self.apply_border_to_range(ws, 'E32', 'F37')
-
-        # Arrow 2
-        ws['G35'] = "→"
-        ws['G35'].border = border
-        ws['G35'].alignment = center_alignment
-        ws['G35'].font = Font(size=20, bold=True)
-
-        # Label image area
-        ws.merge_cells('H32:K37')
-        ws['H32'] = "LABEL"
+        ws.merge_cells('H32:K32')
+        ws['H32'] = "Label"
         ws['H32'].alignment = center_alignment
         ws['H32'].font = regular_font
-        self.apply_border_to_range(ws, 'H32', 'K37')
+        self.apply_border_to_range(ws, 'H32', 'K32')
+
+        # Image placeholder areas (rows 33-38)
+        ws.merge_cells('A33:C38')
+        ws['A33'] = "Primary\nPackaging"
+        ws['A33'].alignment = center_alignment
+        ws['A33'].font = regular_font
+        self.apply_border_to_range(ws, 'A33', 'C38')
+
+        # Arrow 1
+        ws['D36'] = "→"
+        ws['D36'].border = border
+        ws['D36'].alignment = center_alignment
+        ws['D36'].font = Font(size=20, bold=True)
+
+        # Secondary Packaging image area
+        ws.merge_cells('E33:F38')
+        ws['E33'] = "SECONDARY\nPACKAGING"
+        ws['E33'].alignment = center_alignment
+        ws['E33'].font = regular_font
+        ws['E33'].fill = light_blue_fill
+        self.apply_border_to_range(ws, 'E33', 'F38')
+
+        # Arrow 2
+        ws['G36'] = "→"
+        ws['G36'].border = border
+        ws['G36'].alignment = center_alignment
+        ws['G36'].font = Font(size=20, bold=True)
+
+        # Label image area
+        ws.merge_cells('H33:K38')
+        ws['H33'] = "LABEL"
+        ws['H33'].alignment = center_alignment
+        ws['H33'].font = regular_font
+        self.apply_border_to_range(ws, 'H33', 'K38')
 
         # Add borders to remaining cells in image section
-        for row in range(32, 38):
+        for row in range(33, 39):
             for col in ['D', 'G', 'L']:
-                if row != 35 or col != 'D':  # Skip D35 and G35 which have arrows
-                    if row != 35 or col != 'G':
+                if row != 36 or col != 'D':  # Skip D35 and G35 which have arrows
+                    if row != 36 or col != 'G':
                         ws[f'{col}{row}'] = ""
                         ws[f'{col}{row}'].border = border
 
         # Approval Section
-        ws.merge_cells('A38:C38')
-        ws['A38'] = "Issued By"
-        ws['A38'].alignment = center_alignment
-        ws['A38'].font = regular_font
-        self.apply_border_to_range(ws, 'A38', 'C38')
+        ws.merge_cells('A39:C39')
+        ws['A39'] = "Issued By"
+        ws['A39'].alignment = center_alignment
+        ws['A39'].font = regular_font
+        self.apply_border_to_range(ws, 'A39', 'C39')
 
-        ws.merge_cells('D38:G38')
-        ws['D38'] = "Reviewed By"
-        ws['D38'].alignment = center_alignment
-        ws['D38'].font = regular_font
-        self.apply_border_to_range(ws, 'D38', 'G38')
+        ws.merge_cells('D39:G39')
+        ws['D39'] = "Reviewed By"
+        ws['D39'].alignment = center_alignment
+        ws['D39'].font = regular_font
+        self.apply_border_to_range(ws, 'D39', 'G39')
 
-        ws.merge_cells('H38:K38')
-        ws['H38'] = "Approved By"
-        ws['H38'].alignment = center_alignment
-        ws['H38'].font = regular_font
-        self.apply_border_to_range(ws, 'H38', 'K38')
-
-        ws['L38'] = ""
-        ws['L38'].border = border
+        ws.merge_cells('H39:K39')
+        ws['H39'] = "Approved By"
+        ws['H39'].alignment = center_alignment
+        ws['H39'].font = regular_font
+        self.apply_border_to_range(ws, 'H39', 'K39')
 
         # Signature boxes (rows 39-42)
-        ws.merge_cells('A39:C42')
-        ws['A39'] = ""
-        self.apply_border_to_range(ws, 'A39', 'C42')
+        ws.merge_cells('A40:C43')
+        ws['A40'] = ""
+        self.apply_border_to_range(ws, 'A40', 'C43')
 
-        ws.merge_cells('D39:G42')
-        ws['D39'] = ""
-        self.apply_border_to_range(ws, 'D39', 'G42')
+        ws.merge_cells('D40:G43')
+        ws['D40'] = ""
+        self.apply_border_to_range(ws, 'D40', 'G43')
 
-        ws.merge_cells('H39:K42')
-        ws['H39'] = ""
-        self.apply_border_to_range(ws, 'H39', 'K42')
+        ws.merge_cells('H40:K43')
+        ws['H40'] = ""
+        self.apply_border_to_range(ws, 'H40', 'K43')
 
         # Second Approval Section
-        ws.merge_cells('A43:C43')
-        ws['A43'] = "Issued By"
-        ws['A43'].alignment = center_alignment
-        ws['A43'].font = regular_font
-        self.apply_border_to_range(ws, 'A43', 'C43')
+        ws.merge_cells('A44:C44')
+        ws['A44'] = "Issued By"
+        ws['A44'].alignment = center_alignment
+        ws['A44'].font = regular_font
+        self.apply_border_to_range(ws, 'A44', 'C44')
 
-        ws.merge_cells('D43:G43')
-        ws['D43'] = "Reviewed By"
-        ws['D43'].alignment = center_alignment
-        ws['D43'].font = regular_font
-        self.apply_border_to_range(ws, 'D43', 'G43')
+        ws.merge_cells('D44:G44')
+        ws['D44'] = "Reviewed By"
+        ws['D44'].alignment = center_alignment
+        ws['D44'].font = regular_font
+        self.apply_border_to_range(ws, 'D44', 'G44')
 
-        ws.merge_cells('H43:K43')
-        ws['H43'] = "Approved By"
-        ws['H43'].alignment = center_alignment
-        ws['H43'].font = regular_font
-        self.apply_border_to_range(ws, 'H43', 'K43')
+        ws.merge_cells('H44:K44')
+        ws['H44'] = "Approved By"
+        ws['H44'].alignment = center_alignment
+        ws['H44'].font = regular_font
+        self.apply_border_to_range(ws, 'H44', 'K44')
 
         # Second signature boxes (rows 44-47)
-        ws.merge_cells('A44:C47')
-        ws['A44'] = ""
-        self.apply_border_to_range(ws, 'A44', 'C47')
+        ws.merge_cells('A45:C48')
+        ws['A45'] = ""
+        self.apply_border_to_range(ws, 'A45', 'C48')
 
-        ws.merge_cells('D44:G47')
-        ws['D44'] = ""
-        self.apply_border_to_range(ws, 'D44', 'G47')
+        ws.merge_cells('D45:G48')
+        ws['D45'] = ""
+        self.apply_border_to_range(ws, 'D45', 'G48')
 
-        ws.merge_cells('H44:K47')
-        ws['H44'] = ""
-        self.apply_border_to_range(ws, 'H44', 'K47')
+        ws.merge_cells('H45:K48')
+        ws['H45'] = ""
+        self.apply_border_to_range(ws, 'H45', 'K48')
 
         # Return the workbook
         return wb
@@ -1169,11 +1166,11 @@ class ExactPackagingTemplateManager:
             'Secondary Qty/Pack': 'E16',
             'Secondary Empty Weight': 'F16',
             'Secondary Pack Weight': 'G16',
-            'Problem If Any': 'L16',
-            'Issued By': 'A39',
-            'Reviewed By': 'D39',
-            'Approved By': 'H39',
-            'Caution': 'L17'
+            'Problem If Any': 'L17',
+            'Issued By': 'A40',
+            'Reviewed By': 'D40',
+            'Approved By': 'H40',
+            'Caution': 'L18'
         }
         # Populate cells with data
         for field, cell in cell_mapping.items():
