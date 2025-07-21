@@ -471,7 +471,7 @@ class ExactPackagingTemplateManager:
         ws['A2'].font = regular_font
 
         ws.merge_cells('B2:E2')
-        ws['B2'] = "Revision 1"
+        ws['B2'] = "01"
         ws['B2'].border = border
         self.apply_border_to_range(ws, 'B2', 'E2')
 
