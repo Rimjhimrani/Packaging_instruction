@@ -985,7 +985,7 @@ class ExactPackagingTemplateManager:
         ws['L19'].border = border
 
         # Packaging procedure steps (rows 20-30) - WITH MERGED CELLS
-        for i in range(1, 11):
+        for i in range(1, 12):
             row = 19 + i
             ws[f'A{row}'] = str(i)
             ws[f'A{row}'].border = border
