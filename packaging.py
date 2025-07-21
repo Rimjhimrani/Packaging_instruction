@@ -911,7 +911,7 @@ class ExactPackagingTemplateManager:
         return wb
     
     def populate_template_with_data(self, wb, data_dict):
-        """Populate the template with data from dictionary"""
+       """Populate the template with data from dictionary and optional procedures"""
         ws = wb.active
         
         # Map data to specific cells
@@ -948,6 +948,12 @@ class ExactPackagingTemplateManager:
         for field, cell in cell_mapping.items():
             if field in data_dict and data_dict[field]:
                 ws[cell] = data_dict[field]
+        
+        # Populate procedures if provided
+        if procedures_list:
+            for i, procedure in enumerate(procedures_list[:10]):  # Max 10 procedures
+                row = 20 + i  # Procedure rows start from 20
+                ws[f'B{row}'] = procedure
         
         return wb
 
