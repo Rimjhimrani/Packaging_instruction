@@ -721,16 +721,10 @@ class ExactPackagingTemplateManager:
             ws[f'A{row}'].font = regular_font
 
             # MERGE CELLS B to J for each procedure step
-            ws.merge_cells(f'B{row}:J{row}')
+            ws.merge_cells(f'B{row}:K{row}')
             ws[f'B{row}'] = ""
             ws[f'B{row}'].alignment = left_alignment
-            self.apply_border_to_range(ws, f'B{row}', f'J{row}')
-
-            # K and L columns
-            ws[f'K{row}'] = ""
-            ws[f'K{row}'].border = border
-            ws[f'L{row}'] = ""
-            ws[f'L{row}'].border = border
+            self.apply_border_to_range(ws, f'B{row}', f'K{row}')
 
         # Reference Images/Pictures section
         ws.merge_cells('A30:K30')
@@ -739,9 +733,6 @@ class ExactPackagingTemplateManager:
         ws['A30'].font = white_font
         ws['A30'].alignment = center_alignment
         self.apply_border_to_range(ws, 'A30', 'K30')
-
-        ws['L30'] = ""
-        ws['L30'].border = border
 
         # Image section headers
         ws.merge_cells('A31:C31')
@@ -756,16 +747,11 @@ class ExactPackagingTemplateManager:
         ws['D31'].font = regular_font
         self.apply_border_to_range(ws, 'D31', 'G31')
 
-        ws.merge_cells('H31:J31')
+        ws.merge_cells('H31:K31')
         ws['H31'] = "Label"
         ws['H31'].alignment = center_alignment
         ws['H31'].font = regular_font
-        self.apply_border_to_range(ws, 'H31', 'J31')
-
-        ws['K31'] = ""
-        ws['K31'].border = border
-        ws['L31'] = ""
-        ws['L31'].border = border
+        self.apply_border_to_range(ws, 'H31', 'K31')
 
         # Image placeholder areas (rows 32-37)
         ws.merge_cells('A32:C37')
@@ -868,11 +854,6 @@ class ExactPackagingTemplateManager:
         ws['H43'].font = regular_font
         self.apply_border_to_range(ws, 'H43', 'J43')
 
-        ws['K43'] = ""
-        ws['K43'].border = border
-        ws['L43'] = ""
-        ws['L43'].border = border
-
         # Second signature boxes (rows 44-47)
         ws.merge_cells('A44:C47')
         ws['A44'] = ""
@@ -892,12 +873,6 @@ class ExactPackagingTemplateManager:
             ws[f'K{row}'].border = border
             ws[f'L{row}'] = ""
             ws[f'L{row}'].border = border
-
-        # Final rows (48-50) - empty with borders
-        for row in range(48, 51):
-            for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']:
-                ws[f'{col}{row}'] = ""
-                ws[f'{col}{row}'].border = border
 
         # Return the workbook
         return wb
