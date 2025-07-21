@@ -1229,110 +1229,94 @@ def main():
     
     else:  # Upload & Modify Existing mode
         st.header("📁 Upload & Modify Existing Template")
-        
         uploaded_file = st.file_uploader(
             "Upload Existing Excel Template",
             type=['xlsx', 'xls'],
             help="Upload an existing packaging template to extract and modify data"
         )
         if uploaded_file is not None:
-           """Clean upload section without debug clutter"""
-    st.header("📁 Upload & Modify Existing Template")
-    
-    uploaded_file = st.file_uploader(
-        "Upload Existing Excel Template",
-        type=['xlsx', 'xls'],
-        help="Upload an existing packaging template to extract and modify data"
-    )
-    
-    if uploaded_file is not None:
-        st.success("File uploaded successfully!")
+            st.success("File uploaded successfully!")
         
-        # Extract data and images from uploaded file (no debug section)
-        with st.spinner("Extracting data from Excel file..."):
-            extracted_data = template_manager.extract_data_from_excel(uploaded_file)
+            # Extract data and images from uploaded file (no debug section)
+            with st.spinner("Extracting data from Excel file..."):
+                extracted_data = template_manager.extract_data_from_excel(uploaded_file)
             
-            # Reset file pointer for image extraction
-            uploaded_file.seek(0)
-            extracted_images = template_manager.extract_images_from_excel(uploaded_file)
+                # Reset file pointer for image extraction
+                uploaded_file.seek(0)
+                extracted_images = template_manager.extract_images_from_excel(uploaded_file)
             
-            # Show quick summary of what was extracted (optional)
-            col1, col2 = st.columns(2)
-            with col1:
-                extracted_count = sum(1 for v in extracted_data.values() if v)
-                st.metric("Data Fields Extracted", extracted_count)
-            with col2:
-                images_count = sum(1 for v in extracted_images.values() if v)
-                st.metric("Images Extracted", images_count)
+                # Show quick summary of what was extracted
+                col1, col2 = st.columns(2)
+                with col1:
+                    extracted_count = sum(1 for v in extracted_data.values() if v)
+                    st.metric("Data Fields Extracted", extracted_count)
+                with col2:
+                    images_count = sum(1 for v in extracted_images.values() if v)
+                    st.metric("Images Extracted", images_count)
         
-        if extracted_data:
-            st.subheader("📊 Extracted Data")
-            with st.expander("View Extracted Fields", expanded=False):
-                for key, value in extracted_data.items():
-                    if value:
-                        st.write(f"**{key}**: {value}")
+            if extracted_data:
+                st.subheader("📊 Extracted Data")
+                with st.expander("View Extracted Fields", expanded=False):
+                    for key, value in extracted_data.items():
+                        if value:
+                            st.write(f"**{key}**: {value}")
+                # Packaging procedures section
+                st.subheader("📋 Update Packaging Procedures")
             
-            # Rest of your existing code for packaging procedures and template generation...
-            st.subheader("📋 Update Packaging Procedures")
+                col1, col2 = st.columns([1, 2])
             
-            col1, col2 = st.columns([1, 2])
-            
-            with col1:
-                st.write("**Select Packaging Type:**")
-                procedure_type = st.selectbox(
-                    "Packaging Procedure Type",
-                    ["Select", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS"],
-                    help="Select a packaging type to auto-populate procedure steps"
-                )
-            
-            with col2:
-                if procedure_type:
-                    st.info(f"Selected: {procedure_type}")
-                    if procedure_type in template_manager.packaging_procedures:
-                        procedures = template_manager.get_procedure_steps(procedure_type)
-                        st.write("**Procedure Steps Preview:**")
-                        for i, step in enumerate(procedures, 1):
-                            if step.strip():
-                                st.write(f"{i}. {step}")
-            
-            st.subheader("📁 Generate Updated Template")
-            
-            if st.button("🚀 Generate Updated Excel Template", type="primary"):
-                # Use original extracted data
-                updated_form_data = extracted_data.copy()
-                
-                # Update only the procedure steps if a type is selected
-                if procedure_type and procedure_type in template_manager.packaging_procedures:
-                    procedure_steps = template_manager.get_procedure_steps(procedure_type)
-                    for i, step in enumerate(procedure_steps, 1):
-                        updated_form_data[f'Procedure Step {i}'] = step
-                    # Also update the primary packaging type
-                    updated_form_data['Primary Packaging Type'] = procedure_type
-                    st.success(f"Updated procedures for {procedure_type}")
-                
-                # Generate Excel file
-                try:
-                    wb = template_manager.create_exact_template_excel()
-                    wb = template_manager.populate_template_with_data(wb, updated_form_data, None, extracted_images)
-                    
-                    # Save to buffer
-                    buffer = io.BytesIO()
-                    wb.save(buffer)
-                    buffer.seek(0)
-                    
-                    # Provide download
-                    st.success("✅ Updated template generated successfully!")
-                    st.download_button(
-                        label="⬇️ Download Updated Excel Template",
-                        data=buffer.getvalue(),
-                        file_name=f"Updated_Packaging_Template_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                with col1:
+                    st.write("**Select Packaging Type:**")
+                    procedure_type = st.selectbox(
+                        "Packaging Procedure Type",
+                        ["Select Packaging Procedure", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS"],
+                        help="Select a packaging type to auto-populate procedure steps"
                     )
-                except Exception as e:
-                    st.error(f"Error generating updated template: {str(e)}")
+                with col2:
+                    if procedure_type and procedure_type != "Select":
+                        st.info(f"Selected: {procedure_type}")
+                        if procedure_type in template_manager.packaging_procedures:
+                            procedures = template_manager.get_procedure_steps(procedure_type)
+                            st.write("**Procedure Steps Preview:**")
+                            for i, step in enumerate(procedures, 1):
+                                if step.strip():
+                                    st.write(f"{i}. {step}")
+                st.subheader("📁 Generate Updated Template")
+            
+                if st.button("🚀 Generate Updated Excel Template", type="primary"):
+                    # Use original extracted data
+                    updated_form_data = extracted_data.copy()
+                
+                    # Update only the procedure steps if a type is selected
+                    if procedure_type and procedure_type != "Select" and procedure_type in template_manager.packaging_procedures:
+                        procedure_steps = template_manager.get_procedure_steps(procedure_type)
+                        for i, step in enumerate(procedure_steps, 1):
+                            updated_form_data[f'Procedure Step {i}'] = step
+                        # Also update the primary packaging type
+                        updated_form_data['Primary Packaging Type'] = procedure_type
+                        st.success(f"Updated procedures for {procedure_type}")
+                    # Generate Excel file
+                    try:
+                        wb = template_manager.create_exact_template_excel()
+                        wb = template_manager.populate_template_with_data(wb, updated_form_data, None, extracted_images)
+                    
+                        # Save to buffer
+                        buffer = io.BytesIO()
+                        wb.save(buffer)
+                        buffer.seek(0)
+                    
+                        # Provide download
+                        st.success("✅ Updated template generated successfully!")
+                        st.download_button(
+                            label="⬇️ Download Updated Excel Template",
+                            data=buffer.getvalue(),
+                            file_name=f"Updated_Packaging_Template_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                    except Exception as e:
+                        st.error(f"Error generating updated template: {str(e)}")
         else:
             st.warning("Could not extract data from the uploaded file. Please check the file format and try again.")
-
 
 if __name__ == "__main__":
     main()
