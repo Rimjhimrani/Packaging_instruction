@@ -962,6 +962,17 @@ class ExactPackagingTemplateManager:
                 if procedure:  # Only add non-empty procedures
                     row = 20 + i  # Procedure rows start from 20
                     ws[f'B{row}'] = procedure
+        # Handle images if provided
+        if images_data:
+            # Add images to specific cell ranges
+            if images_data.get('Primary Packaging'):
+                self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A32', 'C37')
+            if images_data.get('Secondary Packaging'):
+                self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'E32', 'F37')
+            if images_data.get('Label'):
+                self.add_image_to_cell_range(ws, images_data['Label'], 'H32', 'K37')
+            if images_data.get('Current Packaging'):
+                self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L2', 'L8')
         return wb
 
 def main():
