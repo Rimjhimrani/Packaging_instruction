@@ -190,31 +190,60 @@ class ExactPackagingTemplateManager:
     def get_procedure_steps(self, packaging_type, data_dict=None):
         """Get predefined procedure steps for selected packaging type with placeholders filled"""
         procedures = self.packaging_procedures.get(packaging_type, [""] * 11)
-        
         if data_dict:
-            # Fill in placeholders with actual values from data_dict
+            # Fill in placeholders with actual values
             filled_procedures = []
             for procedure in procedures:
                 filled_procedure = procedure
-                # Replace placeholders with actual values (updated field names)
-                if '{Inner L}' in filled_procedure:
-                    filled_procedure = filled_procedure.replace('{Inner L}', str(data_dict.get('Inner L', 'XXX')))
-                if '{Inner W}' in filled_procedure:
-                    filled_procedure = filled_procedure.replace('{Inner W}', str(data_dict.get('Inner W', 'XXX')))
-                if '{Inner H}' in filled_procedure:
-                    filled_procedure = filled_procedure.replace('{Inner H}', str(data_dict.get('Inner H', 'XXX')))
-                if '{Qty/Pack}' in filled_procedure:
-                    filled_procedure = filled_procedure.replace('{Qty/Pack}', str(data_dict.get('Qty/Pack', 'XXX')))
-                if '{Qty/Veh}' in filled_procedure:
-                    filled_procedure = filled_procedure.replace('{Qty/Veh}', str(data_dict.get('Qty/Veh', 'XXX')))
-                if '{Layer}' in filled_procedure:
-                    filled_procedure = filled_procedure.replace('{Layer}', str(data_dict.get('Layer', 'XXX')))
-                if '{Level}' in filled_procedure:
-                    filled_procedure = filled_procedure.replace('{Level}', str(data_dict.get('Level', 'XXX')))
+            
+                # Replace all possible placeholders with actual values
+                replacements = {
+                    # Inner dimensions (with -mm suffix as used in procedures)
+                    '{Inner L-mm}': str(data_dict.get('Inner L', data_dict.get('Primary L', 'XXX'))),
+                    '{Inner W-mm}': str(data_dict.get('Inner W', data_dict.get('Primary W', 'XXX'))),
+                    '{Inner H-mm}': str(data_dict.get('Inner H', data_dict.get('Primary H', 'XXX'))),
+                
+                    # Without -mm suffix (backup)
+                    '{Inner L}': str(data_dict.get('Inner L', data_dict.get('Primary L', 'XXX'))),
+                    '{Inner W}': str(data_dict.get('Inner W', data_dict.get('Primary W', 'XXX'))),
+                    '{Inner H}': str(data_dict.get('Inner H', data_dict.get('Primary H', 'XXX'))),
+                
+                    # Secondary dimensions
+                    '{Secondary L-mm}': str(data_dict.get('Secondary L-mm', 'XXX')),
+                    '{Secondary W-mm}': str(data_dict.get('Secondary W-mm', 'XXX')),
+                    '{Secondary H-mm}': str(data_dict.get('Secondary H-mm', 'XXX')),
+                
+                    # Quantities - try Inner first, then Primary, then generic
+                    '{Qty/Pack}': str(data_dict.get('Inner Qty/Pack', 
+                                                    data_dict.get('Primary Qty/Pack', 
+                                                                  data_dict.get('Qty/Pack', 'XXX')))),
+                    '{Primary Qty/Pack}': str(data_dict.get('Primary Qty/Pack', 
+                                                            data_dict.get('Qty/Pack', 'XXX'))),
+                
+                    # Other parameters
+                    '{Qty/Veh}': str(data_dict.get('Qty/Veh', 'XXX')),
+                    '{Layer}': str(data_dict.get('Layer', 'XXX')),
+                    '{Level}': str(data_dict.get('Level', 'XXX')),
+                }
+            
+                # Apply all replacements
+                for placeholder, value in replacements.items():
+                    if placeholder in filled_procedure:
+                        filled_procedure = filled_procedure.replace(placeholder, value)
+                        print(f"Replaced {placeholder} with {value} in: {filled_procedure[:50]}...")
                 filled_procedures.append(filled_procedure)
+            # Debug: Print what placeholders were found and replaced
+            print("\n=== PLACEHOLDER REPLACEMENT DEBUG ===")
+            for i, (original, filled) in enumerate(zip(procedures, filled_procedures)):
+                if original != filled:
+                    print(f"Step {i+1} had replacements:")
+                    print(f"  Original: {original[:100]}...")
+                    print(f"  Filled: {filled[:100]}...")
+            print("=====================================\n")
             return filled_procedures
         else:
             return procedures
+            
     def extract_data_from_excel(self, uploaded_file):
         """Extract data from uploaded Excel file"""
         extracted_data = {}
@@ -321,6 +350,12 @@ class ExactPackagingTemplateManager:
                     values = df[col].dropna()
                     if len(values) > 0:
                         extracted_data[field_name] = str(values.iloc[0])
+            # Debug: Print what was extracted
+            print("=== EXTRACTED DATA ===")
+            for key, value in extracted_data.items():
+                if any(x in key.lower() for x in ['qty', 'inner', 'layer', 'level']):
+                    print(f"{key}: {value}")
+            print("=====================")
             
             # Try to extract procedure steps if they exist
             for i in range(1, 11):
