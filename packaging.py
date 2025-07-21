@@ -625,11 +625,11 @@ class ExactPackagingTemplateManager:
         ws['A9'].alignment = center_alignment
         self.apply_border_to_range(ws, 'A9', 'K9')
 
-        ws['L12'] = "CURRENT PACKAGING"
-        ws['L12'].fill = blue_fill
-        ws['L12'].font = white_font
-        ws['L12'].border = border
-        ws['L12'].alignment = center_alignment
+        ws['L15'] = "CURRENT PACKAGING"
+        ws['L15'].fill = blue_fill
+        ws['L15'].font = white_font
+        ws['L15'].border = border
+        ws['L15'].alignment = center_alignment
 
         # Primary packaging headers
         headers = ["Packaging Type", "L-mm", "W-mm", "H-mm", "Qty/Pack", "Empty Weight", "Pack Weight"]
@@ -665,10 +665,10 @@ class ExactPackagingTemplateManager:
         ws['A14'].alignment = center_alignment
         self.apply_border_to_range(ws, 'A14', 'K14')
 
-        ws['L13'] = "PROBLEM IF ANY:"
-        ws['L13'].border = border
-        ws['L13'].font = black_font
-        ws['L13'].alignment = left_alignment
+        ws['L16'] = "PROBLEM IF ANY:"
+        ws['L16'].border = border
+        ws['L16'].font = black_font
+        ws['L16'].alignment = left_alignment
 
         # Secondary packaging headers
         for i, header in enumerate(headers):
@@ -683,11 +683,11 @@ class ExactPackagingTemplateManager:
             ws[f'{col}15'] = ""
             ws[f'{col}15'].border = border
 
-        ws['L14'] = "CAUTION: REVISED DESIGN"
-        ws['L14'].fill = red_fill
-        ws['L14'].font = white_font
-        ws['L14'].border = border
-        ws['L14'].alignment = center_alignment
+        ws['L17'] = "CAUTION: REVISED DESIGN"
+        ws['L17'].fill = red_fill
+        ws['L17'].font = white_font
+        ws['L17'].border = border
+        ws['L17'].alignment = center_alignment
 
         # Secondary packaging data rows (16-18)
         for row in range(16, 19):
@@ -848,11 +848,11 @@ class ExactPackagingTemplateManager:
         ws['D43'].font = regular_font
         self.apply_border_to_range(ws, 'D43', 'G43')
 
-        ws.merge_cells('H43:J43')
+        ws.merge_cells('H43:K43')
         ws['H43'] = "Approved By"
         ws['H43'].alignment = center_alignment
         ws['H43'].font = regular_font
-        self.apply_border_to_range(ws, 'H43', 'J43')
+        self.apply_border_to_range(ws, 'H43', 'K43')
 
         # Second signature boxes (rows 44-47)
         ws.merge_cells('A44:C47')
@@ -865,14 +865,7 @@ class ExactPackagingTemplateManager:
 
         ws.merge_cells('H44:J47')
         ws['H44'] = ""
-        self.apply_border_to_range(ws, 'H44', 'J47')
-
-        # Apply borders for K and L columns in second signature section
-        for row in range(44, 48):
-            ws[f'K{row}'] = ""
-            ws[f'K{row}'].border = border
-            ws[f'L{row}'] = ""
-            ws[f'L{row}'].border = border
+        self.apply_border_to_range(ws, 'H44', 'K47')
 
         # Return the workbook
         return wb
