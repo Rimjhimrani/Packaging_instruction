@@ -73,72 +73,147 @@ class ExactPackagingTemplateManager:
         
         # Predefined packaging procedures for different types
         self.packaging_procedures = {
-            "RIM (R-1)": [
-                "Put 16 quantity of part on plastic pallet",
-                "Apply pet strap over it and put Traceability label as per PMSPL standard guideline",
-                "Stretch wrap complete pack",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- 16)",
-                "Load parts on base plastic pallet -- 4 parts per layer & max 4 level",
+            "BOX IN BOX SENSITIVE": [
+                "Pick up 1 quantity of part and apply bubble wrapping over it",
+                "Apply tape and Put 1 such bubble wrapped part into a carton box [L-{Primary L-mm} mm, W-{Primary W-mm} mm, H-{Primary H-mm} mm]",
+                "Seal carton box and put {Primary Qty/Pack} such carton boxes into another carton box [L-{Secondary L-mm} mm, W-{Secondary W-mm} mm, H-{Secondary H-mm} mm]",
+                "Seal carton box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Primary Qty/Pack})",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
+                "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet -1000 mm)",
+                "Put corner / edge protector and apply pet strap (2 times -- cross way)",
                 "Apply traceability label on complete pack",
-                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
-                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only",
-                "",
+                "Attach packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only."
+            ],
+            
+            "BOX IN BOX": [
+                "Pick up 1 quantity of part and put it in a polybag",
+                "seal the polybag and put it into a carton box [L-{Primary L-mm} mm, W-{Primary W-mm} mm, H-{Primary H-mm} mm]",
+                "Put such carton boxes into another carton box [L-{Secondary L-mm} mm, W-{Secondary W-mm} mm, H-{Secondary H-mm} mm]",
+                "Seal carton box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Primary Qty/Pack})",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
+                "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet -1000 mm)",
+                "Put corner / edge protector and apply pet strap (2 times -- cross way)",
+                "Apply traceability label on complete pack",
+                "Attach packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only."
+            ],
+            
+            "CARTON BOX WITH SEPARATOR FOR ONE PART": [
+                "Pick up {Qty/Veh} parts and apply bubble wrapping over it (individually)",
+                "Apply tape and Put bubble wrapped part into a carton box. Apply part separator & filler material between two parts to arrest part movement during handling",
+                "Seal carton box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Primary Qty/Pack})",
+                "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
+                "Put corner / edge protector and apply pet strap (2 times -- cross way)",
+                "Apply traceability label on complete pack",
+                "Attach packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only.",
                 ""
             ],
-            "REAR DOME": [
+            
+            "INDIVIDUAL NOT SENSITIVE": [
+                "Pick up one part and put it into a polybag",
+                "Seal polybag and Put polybag into a carton box",
+                "Seal carton box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Primary Qty/Pack})",
+                "Load carton boxes on base wooden pallet -- Maximum {Layer} boxes per layer & Maximum {Level} level (max height including pallet - 1000 mm)",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
+                "Put corner / edge protector and apply pet strap (2 times -- cross way)",
+                "Apply traceability label on complete pack",
+                "Attach packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only.",
+                ""
+            ],
+            
+            "INDIVIDUAL PROTECTION FOR EACH PART": [
+                "Pick up {Qty/Veh} parts and apply bubble wrapping over it (individually)",
+                "Apply tape and Put bubble wrapped part into a carton box. Apply part separator & filler material between two parts to arrest part movement during handling",
+                "Seal carton box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Primary Qty/Pack})",
+                "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet - 1000 mm)",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
+                "Put corner / edge protector and apply pet strap (2 times -- cross way)",
+                "Apply traceability label on complete pack",
+                "Attach packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only.",
+                ""
+            ],
+            
+            "INDIVIDUAL SENSITIVE": [
                 "Pick up one part and apply bubble wrapping over it",
-                "Apply tape and put 12 bubble wrapped part into a Polypropylene box",
-                "Put Traceability label as per PMSPL standard guideline",
-                "Prepare additional Polypropylene box in line with procurement schedule (multiple of secondary pack quantity -- 12)",
-                "If procurement schedule is for less no. of parts, then load similar other parts in same Polypropylene box",
-                "Apply pet strap (2 times -- cross way)",
+                "Apply tape and Put bubble wrapped part into a carton box",
+                "Seal carton box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Primary Qty/Pack})",
+                "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet - 1000 mm)",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
+                "Put corner / edge protector and apply pet strap (2 times -- cross way)",
                 "Apply traceability label on complete pack",
-                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts in same polypropylene box)",
-                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only",
+                "Attach packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only.",
                 ""
             ],
-            "FRONT DOME": [
-                "Pick up 1 part and apply bubble wrapping over it",
-                "Apply tape and put 12 bubble wrapped part into a Polypropylene box",
-                "Put Traceability label as per PMSPL standard guideline",
-                "Prepare additional Polypropylene box in line with procurement schedule (multiple of secondary pack quantity -- 12)",
-                "If procurement schedule is for less no. of parts, then load similar other parts in same Polypropylene box",
-                "Apply pet strap (2 times -- cross way)",
+            
+            "MANY IN ONE TYPE": [
+                "Pick up {Qty/Veh} quantity of part and put it in a polybag",
+                "Seal polybag and Put it into a carton box",
+                "Seal carton box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Primary Qty/Pack})",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
+                "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet - 1000 mm)",
+                "Put corner / edge protector and apply pet strap (2 times -- cross way)",
                 "Apply traceability label on complete pack",
-                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts in same polypropylene box)",
-                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only",
+                "Attach packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only.",
                 ""
             ],
-            "REAR WINDSHIELD": [
-                "Pick 20 quantity of rear windshield glass",
-                "Pack rear windshield it in metallic pallet with rubber cushioning separators between parts to arrest part movement during handling",
-                "Seal metallic pallet with top rubber cushioning separators",
-                "Prepare additional pallets inline with scheduled requirement",
+            
+            "SINGLE BOX": [
+                "Pick up 1 quantity of part and put it in a polybag",
+                "Put into a carton box",
+                "Seal carton box and put Traceability label as per PMSPL standard guideline",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- 1)",
+                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
+                "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level",
+                "Put corner / edge protector and apply pet strap (2 times -- cross way) and stretch wrap it",
                 "Apply traceability label on complete pack",
-                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
-                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only",
-                "",
-                "",
+                "Attach packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
+                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only.",
                 ""
-            ],
-            "FRONT HARNESS": [
-                "Pick up 5 quantity of part and put it in a polybag",
-                "Put 2 such polybags in a polypropylene box",
-                "Seal polypropylene box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional polypropylene boxes in line with procurement schedule (multiple of primary pack quantity -- 5)",
-                "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same plastic pallet",
-                "Load polypropylene boxes on base plastic pallet -- 4 boxes per layer & max 2 level",
-                "Apply pet strap (2 times -- cross way)",
-                "Apply traceability label on complete pack",
-                "Attached packing list along with dispatch document and tag copy of same on pack (in case of multiple parts on same pallet)",
-                "Ensure Loading/Unloading of palletize load using Hand pallet / stacker / forklift only"
             ]
         }
     
     def get_procedure_steps(self, packaging_type):
-        """Get predefined procedure steps for selected packaging type"""
-        return self.packaging_procedures.get(packaging_type, [""] * 10)
-
+        """Get predefined procedure steps for selected packaging type with placeholders filled"""
+        procedures = self.packaging_procedures.get(packaging_type, [""] * 11)
+        
+        if data_dict:
+            # Fill in placeholders with actual values from data_dict
+            filled_procedures = []
+            for procedure in procedures:
+                filled_procedure = procedure
+                # Replace placeholders with actual values (updated field names)
+                if '{Inner L}' in filled_procedure:
+                    filled_procedure = filled_procedure.replace('{Inner L}', str(data_dict.get('Inner L', 'XXX')))
+                if '{Inner W}' in filled_procedure:
+                    filled_procedure = filled_procedure.replace('{Inner W}', str(data_dict.get('Inner W', 'XXX')))
+                if '{Inner H}' in filled_procedure:
+                    filled_procedure = filled_procedure.replace('{Inner H}', str(data_dict.get('Inner H', 'XXX')))
+                if '{Qty/Pack}' in filled_procedure:
+                    filled_procedure = filled_procedure.replace('{Qty/Pack}', str(data_dict.get('Qty/Pack', 'XXX')))
+                if '{Qty/Veh}' in filled_procedure:
+                    filled_procedure = filled_procedure.replace('{Qty/Veh}', str(data_dict.get('Qty/Veh', 'XXX')))
+                if '{Layer}' in filled_procedure:
+                    filled_procedure = filled_procedure.replace('{Layer}', str(data_dict.get('Layer', 'XXX')))
+                if '{Level}' in filled_procedure:
+                    filled_procedure = filled_procedure.replace('{Level}', str(data_dict.get('Level', 'XXX')))
+                filled_procedures.append(filled_procedure)
+            return filled_procedures
+        else:
+            return procedures
     def extract_data_from_excel(self, uploaded_file):
         """Extract data from uploaded Excel file"""
         extracted_data = {}
@@ -176,21 +251,30 @@ class ExactPackagingTemplateManager:
                 'part h': 'Part H',
                 'height': 'Part H',
                 
-                # Primary packaging
-                'primary packaging type': 'Primary Packaging Type',
-                'packaging type': 'Primary Packaging Type',
-                'primary l-mm': 'Primary L-mm',
-                'primary l': 'Primary L-mm',
-                'primary w-mm': 'Primary W-mm',
-                'primary w': 'Primary W-mm',
-                'primary h-mm': 'Primary H-mm',
-                'primary h': 'Primary H-mm',
-                'primary qty/pack': 'Primary Qty/Pack',
-                'qty/pack': 'Primary Qty/Pack',
-                'primary empty weight': 'Primary Empty Weight',
-                'empty weight': 'Primary Empty Weight',
-                'primary pack weight': 'Primary Pack Weight',
-                'pack weight': 'Primary Pack Weight',
+                # Inner/Primary packaging - Updated mapping
+                'inner packaging type': 'Inner Packaging Type',
+                'primary packaging type': 'Inner Packaging Type',  # For backward compatibility
+                'packaging type': 'Inner Packaging Type',
+                'inner l': 'Inner L',
+                'inner l-mm': 'Inner L',
+                'primary l-mm': 'Inner L',  # Map old primary to inner
+                'primary l': 'Inner L',
+                'inner w': 'Inner W',
+                'inner w-mm': 'Inner W',
+                'primary w-mm': 'Inner W',  # Map old primary to inner
+                'primary w': 'Inner W',
+                'inner h': 'Inner H',
+                'inner h-mm': 'Inner H',
+                'primary h-mm': 'Inner H',  # Map old primary to inner
+                'primary h': 'Inner H',
+                'qty/pack': 'Qty/Pack',
+                'primary qty/pack': 'Qty/Pack',  # Map old primary to new format
+                'inner empty weight': 'Inner Empty Weight',
+                'primary empty weight': 'Inner Empty Weight',  # For backward compatibility
+                'empty weight': 'Inner Empty Weight',
+                'inner pack weight': 'Inner Pack Weight',
+                'primary pack weight': 'Inner Pack Weight',  # For backward compatibility
+                'pack weight': 'Inner Pack Weight',
                 
                 # Secondary packaging
                 'secondary packaging type': 'Secondary Packaging Type',
@@ -203,6 +287,14 @@ class ExactPackagingTemplateManager:
                 'secondary qty/pack': 'Secondary Qty/Pack',
                 'secondary empty weight': 'Secondary Empty Weight',
                 'secondary pack weight': 'Secondary Pack Weight',
+                
+                # Additional procedure parameters
+                'qty/veh': 'Qty/Veh',
+                'qty per vehicle': 'Qty/Veh',
+                'layer': 'Layer',
+                'layers': 'Layer',
+                'level': 'Level',
+                'levels': 'Level',
                 
                 # Approval
                 'issued by': 'Issued By',
@@ -1060,13 +1152,15 @@ class ExactPackagingTemplateManager:
             'Part L': 'G8',
             'Part W': 'I8',
             'Part H': 'K8',
-            'Primary Packaging Type': 'A11',
-            'Primary L-mm': 'B11',
-            'Primary W-mm': 'C11',
-            'Primary H-mm': 'D11',
-            'Primary Qty/Pack': 'E11',
-            'Primary Empty Weight': 'F11',
-            'Primary Pack Weight': 'G11',
+            # Updated Inner packaging fields
+            'Inner Packaging Type': 'A11',
+            'Inner L': 'B11',
+            'Inner W': 'C11',
+            'Inner H': 'D11',
+            'Qty/Pack': 'E11',
+            'Inner Empty Weight': 'F11',
+            'Inner Pack Weight': 'G11',
+            # Secondary packaging
             'Secondary Packaging Type': 'A16',
             'Secondary L-mm': 'B16',
             'Secondary W-mm': 'C16',
@@ -1075,12 +1169,11 @@ class ExactPackagingTemplateManager:
             'Secondary Empty Weight': 'F16',
             'Secondary Pack Weight': 'G16',
             'Problem If Any': 'L16',
-            'Issued By': 'A39',  # You might want to add signature fields
+            'Issued By': 'A39',
             'Reviewed By': 'D39',
             'Approved By': 'H39',
-            'Caution': 'L17'  # Maps to the caution field
+            'Caution': 'L17'
         }
-        # Populate cells with data
         # Populate cells with data
         for field, cell in cell_mapping.items():
             if field in data_dict and data_dict[field]:
@@ -1090,9 +1183,10 @@ class ExactPackagingTemplateManager:
                     print(f"Error populating cell {cell} with field {field}: {e}")
                     print(f"Field value: {data_dict[field]}")
                     print(f"Field type: {type(data_dict[field])}")
-        # Handle procedure steps from data_dict
+        
+        # Handle procedure steps from data_dict (updated to 11 steps)
         try:
-            for i in range(1, 11):  # Max 10 procedures
+            for i in range(1, 12):  # Updated to handle 11 procedures
                 procedure_key = f'Procedure Step {i}'
                 if procedure_key in data_dict and data_dict[procedure_key]:
                     # Convert to string if it's not already
@@ -1105,12 +1199,13 @@ class ExactPackagingTemplateManager:
                         print(f"Skipping {procedure_key} - contains slice object: {procedure_value}")
         except Exception as e:
             print(f"Error handling procedure steps from data_dict: {e}")
+        
         # Populate procedures if provided as separate list
         if procedures_list:
             try:
                 # Ensure procedures_list is actually a list and not a slice object
                 if isinstance(procedures_list, list):
-                    for i, procedure in enumerate(procedures_list[:10]):  # Max 10 procedures
+                    for i, procedure in enumerate(procedures_list[:11]):  # Updated to max 11 procedures
                         if procedure and str(procedure).strip():  # Only add non-empty procedures
                             # Convert to string and check it's not a slice
                             procedure_str = str(procedure)
@@ -1125,6 +1220,7 @@ class ExactPackagingTemplateManager:
                 print(f"Error handling procedures_list: {e}")
                 print(f"procedures_list type: {type(procedures_list)}")
                 print(f"procedures_list value: {procedures_list}")
+        
         # Handle images if provided
         if images_data:
             try:
@@ -1139,7 +1235,9 @@ class ExactPackagingTemplateManager:
                     self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L2', 'L8')
             except Exception as e:
                 print(f"Error handling images: {e}")
+        
         return wb
+
 
 def main():
     st.set_page_config(page_title="Exact Packaging Template Generator", layout="wide")
