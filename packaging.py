@@ -947,33 +947,65 @@ class ExactPackagingTemplateManager:
             'Caution': 'L11'  # Maps to the caution field
         }
         # Populate cells with data
+        # Populate cells with data
         for field, cell in cell_mapping.items():
             if field in data_dict and data_dict[field]:
-                ws[cell] = data_dict[field]
+                try:
+                    ws[cell] = data_dict[field]
+                except Exception as e:
+                    print(f"Error populating cell {cell} with field {field}: {e}")
+                    print(f"Field value: {data_dict[field]}")
+                    print(f"Field type: {type(data_dict[field])}")
         # Handle procedure steps from data_dict
-        for i in range(1, 11):  # Max 10 procedures
-            procedure_key = f'Procedure Step {i}'
-            if procedure_key in data_dict and data_dict[procedure_key]:
-                row = 19 + i  # Procedure rows start from 20
-                ws[f'B{row}'] = data_dict[procedure_key]
+        try:
+            for i in range(1, 11):  # Max 10 procedures
+                procedure_key = f'Procedure Step {i}'
+                if procedure_key in data_dict and data_dict[procedure_key]:
+                    # Convert to string if it's not already
+                    procedure_value = str(data_dict[procedure_key])
+                    # Skip if it's a slice object representation
+                    if not procedure_value.startswith('slice('):
+                        row = 19 + i  # Procedure rows start from 20
+                        ws[f'B{row}'] = procedure_value
+                    else:
+                        print(f"Skipping {procedure_key} - contains slice object: {procedure_value}")
+        except Exception as e:
+            print(f"Error handling procedure steps from data_dict: {e}")
         # Populate procedures if provided as separate list
         if procedures_list:
-            for i, procedure in enumerate(procedures_list[:10]):  # Max 10 procedures
-                if procedure:  # Only add non-empty procedures
-                    row = 20 + i  # Procedure rows start from 20
-                    ws[f'B{row}'] = procedure
-        # Handle images if provided
-        if images_data:
-            # Add images to specific cell ranges
-            if images_data.get('Primary Packaging'):
-                self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A32', 'C37')
-            if images_data.get('Secondary Packaging'):
-                self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'E32', 'F37')
-            if images_data.get('Label'):
-                self.add_image_to_cell_range(ws, images_data['Label'], 'H32', 'K37')
-            if images_data.get('Current Packaging'):
-                self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L2', 'L8')
-        return wb
+            try:
+                # Ensure procedures_list is actually a list and not a slice object
+                if isinstance(procedures_list, list):
+                    for i, procedure in enumerate(procedures_list[:10]):  # Max 10 procedures
+                        if procedure and str(procedure).strip():  # Only add non-empty procedures
+                            # Convert to string and check it's not a slice
+                            procedure_str = str(procedure)
+                            if not procedure_str.startswith('slice('):
+                                row = 20 + i  # Procedure rows start from 20
+                                ws[f'B{row}'] = procedure_str
+                            else:
+                                print(f"Skipping procedure {i+1} - contains slice object: {procedure_str}")
+                    else:
+                        print(f"procedures_list is not a list. Type: {type(procedures_list)}, Value: {procedures_list}")
+                except Exception as e:
+                    print(f"Error handling procedures_list: {e}")
+                    print(f"procedures_list type: {type(procedures_list)}")
+                    print(f"procedures_list value: {procedures_list}")
+            # Handle images if provided
+            if images_data:
+                try:
+                    # Add images to specific cell ranges
+                    if images_data.get('Primary Packaging'):
+                        self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A32', 'C37')
+                    if images_data.get('Secondary Packaging'):
+                        self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'E32', 'F37')
+                    if images_data.get('Label'):
+                        self.add_image_to_cell_range(ws, images_data['Label'], 'H32', 'K37')
+                    if images_data.get('Current Packaging'):
+                        self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L2', 'L8')
+                except Exception as e:
+                    print(f"Error handling images: {e}")
+            return wb
 
 def main():
     st.set_page_config(page_title="Exact Packaging Template Generator", layout="wide")
