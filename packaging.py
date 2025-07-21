@@ -1300,7 +1300,7 @@ def main():
             with col3:
                 st.write("**Primary Packaging**")
                 primary_type = st.selectbox("Primary Packaging Type", 
-                    ["", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS", "Custom"])
+                    ["Select Packaging Procedure", "BOX IN BOX SENSITIVE", "BOX IN BOX", "CARTON BOX WITH SEPARATOR FOR ONE PART", "INDIVIDUAL NOT SENSITIVE", "INDIVIDUAL PROTECTION FOR EACH PART", "INDIVIDUAL SENSITIVE", "MANY IN ONE TYPE", "SINGLE BOX", "Custom"])
                 
                 if primary_type == "Custom":
                     primary_type = st.text_input("Custom Primary Type")
