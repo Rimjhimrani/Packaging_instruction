@@ -252,31 +252,36 @@ class ExactPackagingTemplateManager:
                 'part h': 'Part H',
                 'height': 'Part H',
                 
-                # Inner/Primary packaging - Updated mapping
+                # PRIMARY packaging - separate from inner
+                'primary packaging type': 'Primary Packaging Type',
+                'primary l': 'Primary L',
+                'primary l-mm': 'Primary L',
+                'primary w': 'Primary W',
+                'primary w-mm': 'Primary W',
+                'primary h': 'Primary H',
+                'primary h-mm': 'Primary H',
+                'primary qty/pack': 'Primary Qty/Pack',
+                'primary empty weight': 'Primary Empty Weight',
+                'primary pack weight': 'Primary Pack Weight',
+            
+                # INNER packaging - completely separate from primary
                 'inner packaging type': 'Inner Packaging Type',
-                'primary packaging type': 'Inner Packaging Type',  # For backward compatibility
-                'packaging type': 'Inner Packaging Type',
                 'inner l': 'Inner L',
                 'inner l-mm': 'Inner L',
-                'primary l-mm': 'Inner L',  # Map old primary to inner
-                'primary l': 'Inner L',
-                'inner w': 'Inner W',
+                'inner w': 'Inner W', 
                 'inner w-mm': 'Inner W',
-                'primary w-mm': 'Inner W',  # Map old primary to inner
-                'primary w': 'Inner W',
                 'inner h': 'Inner H',
                 'inner h-mm': 'Inner H',
-                'primary h-mm': 'Inner H',  # Map old primary to inner
-                'primary h': 'Inner H',
-                'qty/pack': 'Qty/Pack',
-                'primary qty/pack': 'Qty/Pack',  # Map old primary to new format
+                'inner qty/pack': 'Inner Qty/Pack',
                 'inner empty weight': 'Inner Empty Weight',
-                'primary empty weight': 'Inner Empty Weight',  # For backward compatibility
-                'empty weight': 'Inner Empty Weight',
                 'inner pack weight': 'Inner Pack Weight',
-                'primary pack weight': 'Inner Pack Weight',  # For backward compatibility
-                'pack weight': 'Inner Pack Weight',
-                
+            
+                # Generic packaging (when not specified as primary or inner)
+                'packaging type': 'Packaging Type',
+                'qty/pack': 'Qty/Pack',
+                'empty weight': 'Empty Weight',
+                'pack weight': 'Pack Weight',
+               
                 # Secondary packaging
                 'secondary packaging type': 'Secondary Packaging Type',
                 'secondary l-mm': 'Secondary L-mm',
