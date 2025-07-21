@@ -490,11 +490,6 @@ class ExactPackagingTemplateManager:
         ws['L2'] = ""
         ws['L2'].border = border
 
-        # Row 3 - empty with borders
-        ws.merge_cells('B3:E3')
-        ws['B3'] = ""
-        self.apply_border_to_range(ws, 'A3', 'L3')
-
         # Row 4 - Section headers
         ws.merge_cells('A4:D4')
         ws['A4'] = "Vendor Information"
@@ -630,11 +625,11 @@ class ExactPackagingTemplateManager:
         ws['A9'].alignment = center_alignment
         self.apply_border_to_range(ws, 'A9', 'K9')
 
-        ws['L9'] = "CURRENT PACKAGING"
-        ws['L9'].fill = blue_fill
-        ws['L9'].font = white_font
-        ws['L9'].border = border
-        ws['L9'].alignment = center_alignment
+        ws['L12'] = "CURRENT PACKAGING"
+        ws['L12'].fill = blue_fill
+        ws['L12'].font = white_font
+        ws['L12'].border = border
+        ws['L12'].alignment = center_alignment
 
         # Primary packaging headers
         headers = ["Packaging Type", "L-mm", "W-mm", "H-mm", "Qty/Pack", "Empty Weight", "Pack Weight"]
@@ -663,20 +658,17 @@ class ExactPackagingTemplateManager:
         ws['D13'].alignment = center_alignment
 
         # Secondary Packaging Instruction header
-        ws.merge_cells('A14:J14')
+        ws.merge_cells('A14:K14')
         ws['A14'] = "Secondary Packaging Instruction (Outer / External)"
         ws['A14'].fill = blue_fill
         ws['A14'].font = white_font
         ws['A14'].alignment = center_alignment
-        self.apply_border_to_range(ws, 'A14', 'J14')
+        self.apply_border_to_range(ws, 'A14', 'K14')
 
-        ws['K14'] = ""
-        ws['K14'].border = border
-
-        ws['L10'] = "PROBLEM IF ANY:"
-        ws['L10'].border = border
-        ws['L10'].font = black_font
-        ws['L10'].alignment = left_alignment
+        ws['L13'] = "PROBLEM IF ANY:"
+        ws['L13'].border = border
+        ws['L13'].font = black_font
+        ws['L13'].alignment = left_alignment
 
         # Secondary packaging headers
         for i, header in enumerate(headers):
@@ -691,11 +683,11 @@ class ExactPackagingTemplateManager:
             ws[f'{col}15'] = ""
             ws[f'{col}15'].border = border
 
-        ws['L11'] = "CAUTION: REVISED DESIGN"
-        ws['L11'].fill = red_fill
-        ws['L11'].font = white_font
-        ws['L11'].border = border
-        ws['L11'].alignment = center_alignment
+        ws['L14'] = "CAUTION: REVISED DESIGN"
+        ws['L14'].fill = red_fill
+        ws['L14'].font = white_font
+        ws['L14'].border = border
+        ws['L14'].alignment = center_alignment
 
         # Secondary packaging data rows (16-18)
         for row in range(16, 19):
