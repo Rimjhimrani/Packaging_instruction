@@ -1238,7 +1238,7 @@ def main():
                     st.write("**Select Packaging Type:**")
                     procedure_type = st.selectbox(
                         "Packaging Procedure Type",
-                        ["", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS"],
+                        ["Select", "RIM (R-1)", "REAR DOME", "FRONT DOME", "REAR WINDSHIELD", "FRONT HARNESS"],
                         help="Select a packaging type to auto-populate procedure steps"
                     )
                 
