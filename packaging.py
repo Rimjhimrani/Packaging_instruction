@@ -910,7 +910,7 @@ class ExactPackagingTemplateManager:
         # Return the workbook
         return wb
     
-    def populate_template_with_data(self, wb, data_dict):
+    def populate_template_with_data(self, wb, data_dict, procedures_list=None, images_data=None):
         """Populate the template with data from dictionary and optional procedures"""
         ws = wb.active
         # Map data to specific cells
