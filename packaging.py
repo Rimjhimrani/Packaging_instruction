@@ -786,7 +786,7 @@ class ExactPackagingTemplateManager:
         ws['A2'] = "Revision No."
         ws['A2'].border = border
         ws['A2'].alignment = left_alignment
-        ws['A2'].font = regular_font
+        ws['A2'].font = header_font
 
         ws.merge_cells('B2:E2')
         ws['B2'] = "01"
@@ -797,7 +797,7 @@ class ExactPackagingTemplateManager:
         ws['F2'] = "Date"
         ws['F2'].border = border
         ws['F2'].alignment = left_alignment
-        ws['F2'].font = regular_font
+        ws['F2'].font = header_font
 
         # Merge cells for date value
         ws.merge_cells('G2:K2')
@@ -846,7 +846,7 @@ class ExactPackagingTemplateManager:
         ws['F5'] = "Part No."
         ws['F5'].border = border
         ws['F5'].alignment = left_alignment
-        ws['F5'].font = regular_font
+        ws['F5'].font = header_font
 
         ws.merge_cells('G5:K5')
         ws['G5'] = ""
@@ -871,7 +871,7 @@ class ExactPackagingTemplateManager:
         ws['F6'] = "Description"
         ws['F6'].border = border
         ws['F6'].alignment = left_alignment
-        ws['F6'].font = regular_font
+        ws['F6'].font = header_font
 
         ws.merge_cells('G6:K6')
         ws['G6'] = ""
@@ -896,7 +896,7 @@ class ExactPackagingTemplateManager:
         ws['F7'] = "Unit Weight"
         ws['F7'].border = border
         ws['F7'].alignment = left_alignment
-        ws['F7'].font = regular_font
+        ws['F7'].font = header_font
 
         ws.merge_cells('G7:K7')
         ws['G7'] = ""
@@ -909,7 +909,7 @@ class ExactPackagingTemplateManager:
         ws['F8'] = "L"
         ws['F8'].border = border
         ws['F8'].alignment = left_alignment
-        ws['F8'].font = regular_font
+        ws['F8'].font = header_font
 
         ws['G8'] = ""
         ws['G8'].border = border
@@ -917,7 +917,7 @@ class ExactPackagingTemplateManager:
         ws['H8'] = "W"
         ws['H8'].border = border
         ws['H8'].alignment = center_alignment
-        ws['H8'].font = regular_font
+        ws['H8'].font = header_font
 
         ws['I8'] = ""
         ws['I8'].border = border
@@ -925,7 +925,7 @@ class ExactPackagingTemplateManager:
         ws['J8'] = "H"
         ws['J8'].border = border
         ws['J8'].alignment = center_alignment
-        ws['J8'].font = regular_font
+        ws['J8'].font = header_font
 
         ws['K8'] = ""
         ws['K8'].border = border
