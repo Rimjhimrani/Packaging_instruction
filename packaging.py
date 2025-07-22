@@ -1569,7 +1569,7 @@ def main():
                     if procedure_type and procedure_type != "Select":
                         st.info(f"Selected: {procedure_type}")
                         if procedure_type in template_manager.packaging_procedures:
-                            procedures = template_manager.get_procedure_steps(procedure_type)
+                            procedures = template_manager.get_procedure_steps(procedure_type, extracted_data)
                             st.write("**Procedure Steps Preview:**")
                             for i, step in enumerate(procedures, 1):
                                 if step.strip():
@@ -1582,7 +1582,7 @@ def main():
                 
                     # Update only the procedure steps if a type is selected
                     if procedure_type and procedure_type != "Select" and procedure_type in template_manager.packaging_procedures:
-                        procedure_steps = template_manager.get_procedure_steps(procedure_type)
+                        procedure_steps = template_manager.get_procedure_steps(procedure_type, extracted_data)
                         for i, step in enumerate(procedure_steps, 1):
                             updated_form_data[f'Procedure Step {i}'] = step
                         # Also update the primary packaging type
