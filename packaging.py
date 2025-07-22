@@ -31,6 +31,15 @@ class ExactPackagingTemplateManager:
             'Part W': '',
             'Part H': '',
             
+            # Inner Packaging (distinct from Primary)
+            'Inner Packaging Type': '',
+            'Inner L': '',
+            'Inner W': '',
+            'Inner H': '',
+            'Inner Qty/Pack': '',
+            'Inner Empty Weight': '',
+            'Inner Pack Weight': '',
+            
             # Primary Packaging
             'Primary Packaging Type': '',
             'Primary L-mm': '',
@@ -76,10 +85,10 @@ class ExactPackagingTemplateManager:
         self.packaging_procedures = {
             "BOX IN BOX SENSITIVE": [
                 "Pick up 1 quantity of part and apply bubble wrapping over it",
-                "Apply tape and Put 1 such bubble wrapped part into a carton box [L-{Inner L-mm} mm, W-{Inner W-mm} mm, H-{Inner H-mm} mm]",
-                "Seal carton box and put {Qty/Pack} such carton boxes into another carton box [L-{Secondary L-mm} mm, W-{Secondary W-mm} mm, H-{Secondary H-mm} mm]",
+                "Apply tape and Put 1 such bubble wrapped part into a carton box [L-{Inner L} mm, W-{Inner W} mm, H-{Inner H} mm]",
+                "Seal carton box and put {Inner Qty/Pack} such carton boxes into another carton box [L-{Inner L} mm, W-{Inner W} mm, H-{Inner H} mm]",
                 "Seal carton box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Primary Qty/Pack})",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of pack quantity -- {Inner Qty/Pack})",
                 "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
                 "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet -1000 mm)",
                 "Put corner / edge protector and apply pet strap (2 times -- cross way)",
@@ -90,10 +99,10 @@ class ExactPackagingTemplateManager:
             
             "BOX IN BOX": [
                 "Pick up 1 quantity of part and put it in a polybag",
-                "seal the polybag and put it into a carton box [L-{Inner L-mm} mm, W-{Inner W-mm} mm, H-{Inner H-mm} mm]",
-                "Put such carton boxes into another carton box [L-{Inner L-mm} mm, W-{Inner W-mm} mm, H-{Inner H-mm} mm]",
+                "seal the polybag and put it into a carton box [L-{Inner L} mm, W-{Inner W} mm, H-{Inner H} mm]",
+                "Put {Inner Qty/Pack} such carton boxes into another carton box [L-{Inner L} mm, W-{Inner W} mm, H-{Inner H} mm]",
                 "Seal carton box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Qty/Pack})",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of pack quantity -- {Inner Qty/Pack})",
                 "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
                 "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet -1000 mm)",
                 "Put corner / edge protector and apply pet strap (2 times -- cross way)",
@@ -106,7 +115,7 @@ class ExactPackagingTemplateManager:
                 "Pick up {Qty/Veh} parts and apply bubble wrapping over it (individually)",
                 "Apply tape and Put bubble wrapped part into a carton box. Apply part separator & filler material between two parts to arrest part movement during handling",
                 "Seal carton box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Qty/Pack})",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of pack quantity -- {Inner Qty/Pack})",
                 "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level",
                 "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
                 "Put corner / edge protector and apply pet strap (2 times -- cross way)",
@@ -120,7 +129,7 @@ class ExactPackagingTemplateManager:
                 "Pick up one part and put it into a polybag",
                 "Seal polybag and Put polybag into a carton box",
                 "Seal carton box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Qty/Pack})",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of pack quantity -- {Inner Qty/Pack})",
                 "Load carton boxes on base wooden pallet -- Maximum {Layer} boxes per layer & Maximum {Level} level (max height including pallet - 1000 mm)",
                 "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
                 "Put corner / edge protector and apply pet strap (2 times -- cross way)",
@@ -134,7 +143,7 @@ class ExactPackagingTemplateManager:
                 "Pick up {Qty/Veh} parts and apply bubble wrapping over it (individually)",
                 "Apply tape and Put bubble wrapped part into a carton box. Apply part separator & filler material between two parts to arrest part movement during handling",
                 "Seal carton box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Qty/Pack})",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of pack quantity -- {Inner Qty/Pack})",
                 "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet - 1000 mm)",
                 "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
                 "Put corner / edge protector and apply pet strap (2 times -- cross way)",
@@ -148,7 +157,7 @@ class ExactPackagingTemplateManager:
                 "Pick up one part and apply bubble wrapping over it",
                 "Apply tape and Put bubble wrapped part into a carton box",
                 "Seal carton box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Qty/Pack})",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of pack quantity -- {Inner Qty/Pack})",
                 "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet - 1000 mm)",
                 "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
                 "Put corner / edge protector and apply pet strap (2 times -- cross way)",
@@ -162,7 +171,7 @@ class ExactPackagingTemplateManager:
                 "Pick up {Qty/Veh} quantity of part and put it in a polybag",
                 "Seal polybag and Put it into a carton box",
                 "Seal carton box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- {Qty/Pack})",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of pack quantity -- {Inner Qty/Pack})",
                 "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
                 "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level (max height including pallet - 1000 mm)",
                 "Put corner / edge protector and apply pet strap (2 times -- cross way)",
@@ -176,7 +185,7 @@ class ExactPackagingTemplateManager:
                 "Pick up 1 quantity of part and put it in a polybag",
                 "Put into a carton box",
                 "Seal carton box and put Traceability label as per PMSPL standard guideline",
-                "Prepare additional carton boxes in line with procurement schedule (multiple of primary pack quantity -- 1)",
+                "Prepare additional carton boxes in line with procurement schedule (multiple of pack quantity -- {Inner Qty/Pack})",
                 "If procurement schedule is for less no. of boxes, then load similar boxes of other parts on same wooden pallet.",
                 "Load carton boxes on base wooden pallet -- {Layer} boxes per layer & max {Level} level",
                 "Put corner / edge protector and apply pet strap (2 times -- cross way) and stretch wrap it",
@@ -196,30 +205,18 @@ class ExactPackagingTemplateManager:
             for procedure in procedures:
                 filled_procedure = procedure
             
-                # Replace all possible placeholders with actual values
+                # Define replacements - ONLY Inner dimensions and basic parameters
                 replacements = {
-                    # Inner dimensions (with -mm suffix as used in procedures)
-                    '{Inner L-mm}': str(data_dict.get('Inner L', data_dict.get('Primary L', 'XXX'))),
-                    '{Inner W-mm}': str(data_dict.get('Inner W', data_dict.get('Primary W', 'XXX'))),
-                    '{Inner H-mm}': str(data_dict.get('Inner H', data_dict.get('Primary H', 'XXX'))),
-                
-                    # Without -mm suffix (backup)
-                    '{Inner L}': str(data_dict.get('Inner L', data_dict.get('Primary L', 'XXX'))),
-                    '{Inner W}': str(data_dict.get('Inner W', data_dict.get('Primary W', 'XXX'))),
-                    '{Inner H}': str(data_dict.get('Inner H', data_dict.get('Primary H', 'XXX'))),
-                
-                    # Secondary dimensions
-                    '{Secondary L-mm}': str(data_dict.get('Secondary L-mm', 'XXX')),
-                    '{Secondary W-mm}': str(data_dict.get('Secondary W-mm', 'XXX')),
-                    '{Secondary H-mm}': str(data_dict.get('Secondary H-mm', 'XXX')),
-                
-                    # Quantities - try Inner first, then Primary, then generic
-                    '{Qty/Pack}': str(data_dict.get('Inner Qty/Pack', 
-                                                    data_dict.get('Primary Qty/Pack', 
-                                                                  data_dict.get('Qty/Pack', 'XXX')))),
-                    '{Primary Qty/Pack}': str(data_dict.get('Primary Qty/Pack', 
-                                                            data_dict.get('Qty/Pack', 'XXX'))),
-                
+                    # ONLY Inner dimensions (no Primary/Secondary references in procedures)
+                    # ONLY Inner dimensions (no Primary/Secondary references in procedures)
+                    '{Inner L}': str(data_dict.get('Inner L', 'XXX')),
+                    '{Inner W}': str(data_dict.get('Inner W', 'XXX')),  
+                    '{Inner H}': str(data_dict.get('Inner H', 'XXX')),
+                    '{Inner Qty/Pack}': str(data_dict.get('Inner Qty/Pack', 'XXX')),
+                    
+                    # Generic quantities (for backwards compatibility)
+                    '{Qty/Pack}': str(data_dict.get('Inner Qty/Pack', data_dict.get('Qty/Pack', 'XXX'))),
+                    
                     # Other parameters
                     '{Qty/Veh}': str(data_dict.get('Qty/Veh', 'XXX')),
                     '{Layer}': str(data_dict.get('Layer', 'XXX')),
@@ -230,15 +227,17 @@ class ExactPackagingTemplateManager:
                 for placeholder, value in replacements.items():
                     if placeholder in filled_procedure:
                         filled_procedure = filled_procedure.replace(placeholder, value)
-                        print(f"Replaced {placeholder} with {value} in: {filled_procedure[:50]}...")
+                        print(f"Replaced {placeholder} with {value}")
+                        
                 filled_procedures.append(filled_procedure)
+                
             # Debug: Print what placeholders were found and replaced
             print("\n=== PLACEHOLDER REPLACEMENT DEBUG ===")
             for i, (original, filled) in enumerate(zip(procedures, filled_procedures)):
                 if original != filled:
                     print(f"Step {i+1} had replacements:")
-                    print(f"  Original: {original[:100]}...")
-                    print(f"  Filled: {filled[:100]}...")
+                    print(f"  Original: {original}")
+                    print(f"  Filled: {filled}")
             print("=====================================\n")
             return filled_procedures
         else:
@@ -280,6 +279,19 @@ class ExactPackagingTemplateManager:
                 'width': 'Part W',
                 'part h': 'Part H',
                 'height': 'Part H',
+
+                
+                 # INNER packaging - completely separate
+                'inner packaging type': 'Inner Packaging Type',
+                'inner l': 'Inner L',
+                'inner l-mm': 'Inner L',
+                'inner w': 'Inner W', 
+                'inner w-mm': 'Inner W',
+                'inner h': 'Inner H',
+                'inner h-mm': 'Inner H',
+                'inner qty/pack': 'Inner Qty/Pack',
+                'inner empty weight': 'Inner Empty Weight',
+                'inner pack weight': 'Inner Pack Weight',
                 
                 # PRIMARY packaging - separate from inner
                 'primary packaging type': 'Primary Packaging Type',
@@ -292,18 +304,6 @@ class ExactPackagingTemplateManager:
                 'primary qty/pack': 'Primary Qty/Pack',
                 'primary empty weight': 'Primary Empty Weight',
                 'primary pack weight': 'Primary Pack Weight',
-            
-                # INNER packaging - completely separate from primary
-                'inner packaging type': 'Inner Packaging Type',
-                'inner l': 'Inner L',
-                'inner l-mm': 'Inner L',
-                'inner w': 'Inner W', 
-                'inner w-mm': 'Inner W',
-                'inner h': 'Inner H',
-                'inner h-mm': 'Inner H',
-                'inner qty/pack': 'Inner Qty/Pack',
-                'inner empty weight': 'Inner Empty Weight',
-                'inner pack weight': 'Inner Pack Weight',
             
                 # Generic packaging (when not specified as primary or inner)
                 'packaging type': 'Packaging Type',
@@ -350,15 +350,16 @@ class ExactPackagingTemplateManager:
                     values = df[col].dropna()
                     if len(values) > 0:
                         extracted_data[field_name] = str(values.iloc[0])
+                        
             # Debug: Print what was extracted
             print("=== EXTRACTED DATA ===")
             for key, value in extracted_data.items():
-                if any(x in key.lower() for x in ['qty', 'inner', 'layer', 'level']):
+                if any(x in key.lower() for x in ['inner', 'primary', 'secondary', 'qty']):
                     print(f"{key}: {value}")
             print("=====================")
             
             # Try to extract procedure steps if they exist
-            for i in range(1, 11):
+            for i in range(1, 12):  # Updated to 11 steps
                 step_patterns = [f'procedure step {i}', f'step {i}', f'{i}']
                 for col in df.columns:
                     col_lower = str(col).lower().strip()
@@ -1191,13 +1192,13 @@ class ExactPackagingTemplateManager:
             'Part W': 'I8',
             'Part H': 'K8',
             # Updated Inner packaging fields
-            'Inner Packaging Type': 'A11',
-            'Inner L': 'B11',
-            'Inner W': 'C11',
-            'Inner H': 'D11',
-            'Qty/Pack': 'E11',
-            'Inner Empty Weight': 'F11',
-            'Inner Pack Weight': 'G11',
+            'Primary Packaging Type': 'A11',
+            'Primary L-mm': 'B11',
+            'Primary W-mm': 'C11',
+            'Primary H-mm': 'D11',
+            'Primary Qty/Pack': 'E11',
+            'Primary Empty Weight': 'F11',
+            'Primary Pack Weight': 'G11',
             # Secondary packaging
             'Secondary Packaging Type': 'A16',
             'Secondary L-mm': 'B16',
