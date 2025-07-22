@@ -1527,6 +1527,12 @@ def main():
             # Extract data and images from uploaded file (no debug section)
             with st.spinner("Extracting data from Excel file..."):
                 extracted_data = template_manager.extract_data_from_excel(uploaded_file)
+
+                # ✅ ADD DEBUG HERE
+                print("=== DEBUG PLACEHOLDERS ===")
+                for key in ['Qty/Veh', 'Layer', 'Level', 'Inner L', 'Inner W', 'Inner H', 'Inner Qty/Pack']:
+                    print(f"{key}: {extracted_data.get(key)}")
+                print("==========================")
             
                 # Reset file pointer for image extraction
                 uploaded_file.seek(0)
