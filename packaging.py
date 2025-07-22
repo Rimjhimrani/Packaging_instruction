@@ -815,9 +815,6 @@ class ExactPackagingTemplateManager:
         ws['A4'].alignment = center_alignment
         self.apply_border_to_range(ws, 'A4', 'D4')
 
-        ws['E4'] = ""
-        ws['E4'].border = border
-
         ws.merge_cells('F4:I4')
         ws['F4'] = "Part Information"
         ws['F4'].font = title_font
@@ -838,9 +835,6 @@ class ExactPackagingTemplateManager:
         ws.merge_cells('B5:D5')
         ws['B5'] = ""
         self.apply_border_to_range(ws, 'B5', 'D5')
-
-        ws['E5'] = ""
-        ws['E5'].border = border
         
         # Part fields
         ws['F5'] = "Part No."
@@ -865,9 +859,6 @@ class ExactPackagingTemplateManager:
         ws['B6'] = ""
         self.apply_border_to_range(ws, 'B6', 'D6')
 
-        ws['E6'] = ""
-        ws['E6'].border = border
-
         ws['F6'] = "Description"
         ws['F6'].border = border
         ws['F6'].alignment = left_alignment
@@ -889,9 +880,6 @@ class ExactPackagingTemplateManager:
         ws.merge_cells('B7:D7')
         ws['B7'] = ""
         self.apply_border_to_range(ws, 'B7', 'D7')
-
-        ws['E7'] = ""
-        ws['E7'].border = border
 
         ws['F7'] = "Unit Weight"
         ws['F7'].border = border
@@ -1026,9 +1014,6 @@ class ExactPackagingTemplateManager:
         ws['A22'].font = white_font
         ws['A22'].alignment = center_alignment
         self.apply_border_to_range(ws, 'A22', 'K22')
-
-        ws['L22'] = ""
-        ws['L22'].border = border
 
         # Packaging procedure steps (rows 23-33) - UPDATED ROW NUMBERS
         for i in range(1, 12):
