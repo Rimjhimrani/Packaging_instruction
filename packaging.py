@@ -282,7 +282,6 @@ class ExactPackagingTemplateManager:
 
                 
                  # INNER packaging - completely separate
-                'inner packaging type': 'Inner Packaging Type',
                 'inner l': 'Inner L',
                 'inner l-mm': 'Inner L',
                 'inner w': 'Inner W', 
@@ -296,10 +295,10 @@ class ExactPackagingTemplateManager:
                 # PRIMARY packaging - separate from inner
                 'primary packaging type': 'Primary Packaging Type',
                 'primary l': 'Primary L',
-                'primary l-mm': 'Primary L',
-                'primary w': 'Primary W',
+                'primary l-mm': 'Primary L-mm',
+                'primary w': 'Primary W-mm',
                 'primary w-mm': 'Primary W',
-                'primary h': 'Primary H',
+                'primary h': 'Primary H-mm',
                 'primary h-mm': 'Primary H',
                 'primary qty/pack': 'Primary Qty/Pack',
                 'primary empty weight': 'Primary Empty Weight',
