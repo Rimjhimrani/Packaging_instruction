@@ -676,57 +676,38 @@ class ExactPackagingTemplateManager:
             img_buffer = io.BytesIO()
             pil_image.save(img_buffer, format='PNG')
             img_buffer.seek(0)
-        
             # Create openpyxl Image
             img = Image(img_buffer)
-        
-            # Define specific dimensions for known cell ranges in your template
+
+            # Define exact pixel dimensions for known cell ranges
             cell_range_dimensions = {
-                # Primary Packaging area (A32:C37) - 3 cols x 6 rows
-                'A37:C42': {'width': 560, 'height': 96},  # 3*12*7*0.9 x 6*16*1.33*0.9
-                # Secondary Packaging area (E32:F37) - 2 cols x 6 rows  
-                'E37:F42': {'width': 300, 'height': 96},   # 2*12*7*0.9 x 6*16*1.33*0.9
-                # Label area (H32:K37) - 4 cols x 6 rows
-                'H37:K42': {'width': 560, 'height': 96},   # 4*12*7*0.9 x 6*16*1.33*0.9
-                # Current Packaging area (L2:L8) - 1 col x 7 rows (tall)
-                'L2:L16': {'width': 675, 'height': 149},    # 30*7*0.9 x 7*16*1.33*0.9
+                'A37:C42': {'width': 560, 'height': 120},  # Primary Packaging
+                'E37:F42': {'width': 300, 'height': 120},  # Secondary Packaging
+                'H37:K42': {'width': 560, 'height': 120},  # Label
+                'L2:L16': {'width': 675, 'height': 400},   # Current Packaging
             }
-        
-            # Create cell range key
+            # Get the key like 'A37:C42'
             range_key = f"{start_cell}:{end_cell}"
-        
-            if range_key in cell_range_dimensions:
-                # Use predefined dimensions
-                target_width = cell_range_dimensions[range_key]['width']
-                target_height = cell_range_dimensions[range_key]['height']
-            else:
-                # Fallback to calculation
-                print(f"Unknown cell range {range_key}, calculating dimensions...")
+            # Fallback to original method if range unknown
+            if range_key not in cell_range_dimensions:
+                print(f"Unknown cell range {range_key}, using fallback.")
                 return self.add_image_to_cell_range(ws, pil_image, start_cell, end_cell)
-        
-            # Maintain aspect ratio while fitting within target dimensions
-            original_width, original_height = pil_image.size
-        
-            # Calculate scaling factors
-            width_scale = target_width / original_width
-            height_scale = target_height / original_height
-        
-            # Use the smaller scale to maintain aspect ratio
-            scale = min(width_scale, height_scale)
-        
-            # Apply the scaling
-            img.width = int(original_width * scale)
-            img.height = int(original_height * scale)
-        
-            # Add image to worksheet
+            # Use predefined width/height for this image range
+            target_width = cell_range_dimensions[range_key]['width']
+            target_height = cell_range_dimensions[range_key]['height']
+
+            # 🔥 Force the image to exactly match the cell range size
+            img.width = target_width
+            img.height = target_height
+
+            # Debug log
+            print(f"[FORCE] Placing image at {range_key} with size {img.width}x{img.height}px")
+
+            # Place the image in the worksheet
             ws.add_image(img, start_cell)
-        
-            print(f"Template image added: {range_key} -> {img.width}x{img.height}px (scale: {scale:.2f})")
-        
             return True
-        
         except Exception as e:
-            print(f"Error adding template image to {start_cell}:{end_cell}: {e}")
+            print(f"❌ Error placing image at {start_cell}:{end_cell}: {e}")
             return False
 
     def create_exact_template_excel(self):
