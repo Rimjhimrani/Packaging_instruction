@@ -900,7 +900,7 @@ class ExactPackagingTemplateManager:
         ws['K8'].border = border
 
         # Empty cells for A-E and L in row 8
-        for col in ['A', 'B', 'C', 'D', 'E', 'L']:
+        for col in ['A', 'B', 'C', 'D', 'L']:
             ws[f'{col}8'] = ""
             ws[f'{col}8'].border = border
 
@@ -1075,7 +1075,7 @@ class ExactPackagingTemplateManager:
 
         # Add borders to remaining cells in image section - UPDATED ROW NUMBERS
         for row in range(37, 43):
-            for col in ['D', 'G', 'L']:
+            for col in ['D', 'G']:
                 if row != 40 or col != 'D':  # Skip D40 which has arrow
                     if row != 40 or col != 'G':  # Skip G40 which has arrow
                         ws[f'{col}{row}'] = ""
