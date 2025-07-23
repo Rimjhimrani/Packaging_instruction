@@ -1261,13 +1261,13 @@ class ExactPackagingTemplateManager:
             try:
                 # Add images to specific cell ranges - UPDATED ROW NUMBERS
                 if images_data.get('Primary Packaging'):
-                    self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A36', 'C41')  # Was A32:C37
+                    self.add_image_to_cell_range(ws, images_data['Primary Packaging'], 'A37', 'C42')  # Was A32:C37
                 if images_data.get('Secondary Packaging'):
-                    self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'E36', 'F41')  # Was E32:F37
+                    self.add_image_to_cell_range(ws, images_data['Secondary Packaging'], 'E37', 'F42')  # Was E32:F37
                 if images_data.get('Label'):
-                    self.add_image_to_cell_range(ws, images_data['Label'], 'H36', 'K41')  # Was H32:K37
+                    self.add_image_to_cell_range(ws, images_data['Label'], 'H37', 'K42')  # Was H32:K37
                 if images_data.get('Current Packaging'):
-                    self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L2', 'L8')
+                    self.add_image_to_cell_range(ws, images_data['Current Packaging'], 'L2', 'L17')
             except Exception as e:
                 print(f"Error handling images: {e}")
         
